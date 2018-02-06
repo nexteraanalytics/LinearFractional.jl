@@ -7,7 +7,5 @@
     @numerator(lfp,  :Min, -2x[1] + x[2] + 2)
     @denominator(lfp,  x[1] + 3x[2] + 4)
     @test solve(lfp) == :Optimal
-    xvals = getvalue(x)
-    @test getvalue(x[1]) ≈ 7.0
-    @test getvalue(x[2]) ≈ 0.0
+    @test all(getvalue(x) .≈ [7.0, 0.0])
 end
