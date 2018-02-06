@@ -2,10 +2,24 @@ module LinearFractional
 
 using JuMP
 using JuMP
-import JuMP: getobjectivevalue, getvalue, addconstraint, solve, validmodel,
-    constructvariable!, constructconstraint!, variabletype, JuMPArray,
-    setlowerbound, setupperbound, addtoexpr_reorder, assert_validmodel,
-    setobjective
+import JuMP:
+    getobjectivevalue,
+    getvalue,
+    addconstraint,
+    solve,
+    validmodel,
+    constructvariable!,
+    constructconstraint!,
+    variabletype,
+    JuMPArray,
+    JuMPContainerData,
+    setlowerbound,
+    setupperbound,
+    addtoexpr_reorder,
+    assert_validmodel,
+    setobjective,
+    storecontainerdata
+import MathProgBase.AbstractMathProgSolver
 importall Base.Operators
 using Parameters
 
@@ -13,18 +27,19 @@ export LinearFractionalModel,
     @denominator,
     @numerator
 
-mutable struct LinearFractionalModel
+@with_kw mutable struct LinearFractionalModel
     transformedmodel::JuMP.Model
     t::JuMP.Variable
     denom::AffExpr
+    dictList::Vector=Any[]
 end
 
 
-function LinearFractionalModel(;solver=ClpSolver())
+function LinearFractionalModel(;solver::AbstractMathProgSolver=ClpSolver())
     model = JuMP.Model(solver=solver)
     t = @variable(model, lowerbound=eps(Float64), basename="t")
     denom = AffExpr()
-    LinearFractionalModel(model, t, denom)
+    LinearFractionalModel(model, t, denom, Any[])
 end
 
 
@@ -52,6 +67,8 @@ LinearFractionalVariable(m::Model,lower::Number,upper::Number,cat::Symbol,objcoe
 
 getvalue(x::LinearFractionalVariable) = getvalue(x.var)/getvalue(x.model.t)
 
+storecontainerdata(m::LinearFractionalModel, variable, varname, idxsets, idxpairs, condition) =
+    m.transformedmodel.varData[variable] = JuMPContainerData(varname, map(collect,idxsets), idxpairs, condition)
 
 struct LinearFractionalAffExpr
     afftrans::AffExpr
