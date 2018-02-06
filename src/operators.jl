@@ -31,7 +31,7 @@
 # # Number--GenericAffExpr
 # (+)(lhs::Number, rhs::GenericAffExpr) = GenericAffExpr(copy(rhs.vars),copy(rhs.coeffs),lhs+rhs.constant)
 # (-)(lhs::Number, rhs::GenericAffExpr) = GenericAffExpr(copy(rhs.vars),    -rhs.coeffs ,lhs-rhs.constant)
-# (*)(lhs::Number, rhs::GenericAffExpr) = GenericAffExpr(copy(rhs.vars),[lhs*rhs.coeffs[i] for i=1:length(rhs.coeffs)],lhs*rhs.constant)
+(*)(lhs::Number, rhs::LinearFractionalAffExpr) = LinearFractionalAffExpr(AffExpr(copy(rhs.afftrans.vars),[lhs*rhs.afftrans.coeffs[i] for i=1:length(rhs.afftrans.coeffs)],lhs*rhs.afftrans.constant), rhs.t)
 # # Number--QuadExpr
 # (+)(lhs::Number, rhs::QuadExpr) = QuadExpr(copy(rhs.qvars1),copy(rhs.qvars2),copy(rhs.qcoeffs),lhs+rhs.aff)
 # (-)(lhs::Number, rhs::QuadExpr) = QuadExpr(copy(rhs.qvars1),copy(rhs.qvars2),    -rhs.qcoeffs ,lhs-rhs.aff)
@@ -51,7 +51,7 @@
 # (*)(lhs::Variable, rhs::Number) = (*)(rhs,lhs)
 # (/)(lhs::Variable, rhs::Number) = (*)(1./rhs,lhs)
 # # Variable--Variable
-# (+)(lhs::Variable, rhs::Variable) = AffExpr([lhs,rhs], [1.,+1.], 0.)
+(+)(lhs::LinearFractionalVariable, rhs::LinearFractionalVariable) = AffExpr([lhs,rhs], [1.,+1.], 0.)
 # (-)(lhs::Variable, rhs::Variable) = AffExpr([lhs,rhs], [1.,-1.], 0.)
 # (*)(lhs::Variable, rhs::Variable) = QuadExpr([lhs],[rhs],[1.],AffExpr(Variable[],Float64[],0.))
 # # Variable--Norm
@@ -110,7 +110,9 @@
 # # AffExpr--Number
 # (+)(lhs::GenericAffExpr, rhs::Number) = (+)(+rhs,lhs)
 # (-)(lhs::GenericAffExpr, rhs::Number) = (+)(-rhs,lhs)
-# (*)(lhs::GenericAffExpr, rhs::Number) = (*)(rhs,lhs)
+(*)(lhs::LinearFractionalAffExpr, rhs::Number) = (*)(rhs,lhs)
+
+
 # (/)(lhs::GenericAffExpr, rhs::Number) = (*)(1.0/rhs,lhs)
 # function (^)(lhs::Union{Variable,AffExpr}, rhs::Integer)
 #     if rhs == 2
@@ -132,6 +134,8 @@
 (+)(lhs::AffExpr, rhs::LinearFractionalAffExpr) = LinearFractionalAffExpr((+)(lhs, rhs.afftrans), rhs.t)
 (+)(lhs::LinearFractionalAffExpr, rhs::LinearFractionalAffExpr) = LinearFractionalAffExpr((+)(lhs.afftrans, rhs.afftrans), rhs.t)
 (+)(lhs::LinearFractionalAffExpr, rhs::Float64) = LinearFractionalAffExpr((+)(lhs.afftrans, lhs.t * rhs), lhs.t)
+#(+)(lhs::Float64, rhs::LinearFractionalAffExpr) = rhs + lhs
+
 (+)(lhs::LinearFractionalVariable, rhs::LinearFractionalAffExpr) = LinearFractionalAffExpr((+)(rhs.afftrans,lhs.var), rhs.t)
 
 #(+){C, V}(lhs::GenericAffExpr{C,V}, rhs::LinearFractionalVariable) = (+)(rhs,lhs)

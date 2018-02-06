@@ -1,7 +1,5 @@
 # Validated from http://www.ams.jhu.edu/~castello/625.414/Handouts/FractionalProg.pdf
 
-
-
 @testset "Simple example" begin
     lfp = LinearFractionalModel(solver=ClpSolver())
     x1 = @variable(lfp, basename="x1", lowerbound=0)
