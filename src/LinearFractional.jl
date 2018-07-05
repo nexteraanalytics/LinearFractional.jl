@@ -52,6 +52,12 @@ struct LinearFractionalVariable <: JuMP.AbstractJuMPScalar
 end
 
 
+struct LinearFractionalAffExpr
+    afftrans::AffExpr
+    t::JuMP.Variable
+end
+
+
 function LinearFractionalVariable(m::LinearFractionalModel, lower::Number, upper::Number, cat::Symbol, name::AbstractString="", value::Number=NaN)
     var = JuMP.Variable(m.transformedmodel, -Inf, Inf, cat, name, value)
     lfvar = LinearFractionalVariable(m, var)
@@ -73,15 +79,20 @@ getvalue(x::LinearFractionalVariable) = getvalue(x.var)/getvalue(x.model.t)
 # Need to define Base.one to get dot() for free, but I don't think we can
 # do this without knowing the model (to get t)
 # Base.one(::Type{LinearFractionalVariable}) = LinearFractionalAffExpr(Variable[],Float64[],1.0)
+Base.sum(xs::Array{LinearFractionalAffExpr}) = LinearFractionalAffExpr(sum(x.afftrans for x in xs), xs[1].t)
+function Base.sum(xs::Array{LinearFractionalAffExpr}, dim)
+    s = sum(collect(x.afftrans for x in xs), dim)
+    if ndims == 0
+        return LinearFractionalAffExpr(s, xs[1].t)
+    else
+        return [LinearFractionalAffExpr(aff, xs[1].t) for aff in s]
+    end
+end
 
 
 storecontainerdata(m::LinearFractionalModel, variable, varname, idxsets, idxpairs, condition) =
     m.transformedmodel.varData[variable] = JuMPContainerData(varname, map(collect,idxsets), idxpairs, condition)
 
-struct LinearFractionalAffExpr
-    afftrans::AffExpr
-    t::JuMP.Variable
-end
 
 
 

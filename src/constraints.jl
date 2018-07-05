@@ -24,6 +24,7 @@ function addconstraint(model::LinearFractionalModel, constraint::LinearFractiona
     for con in constraint.lctrans
         addconstraint(model.transformedmodel, con)
     end
+    # TODO: check that the second argument to the ref constructor is correct:
     LinearFractionalConstraintRef(model, length(constraint.lctrans))
 end
 
@@ -49,20 +50,3 @@ function constructconstraint!(aff::LinearFractionalAffExpr, lb, ub)
     # LinearConstraint(aff - lb * aff.t, 0, Inf)
     # LinearConstraint(aff - ub * aff.t, -Inf, 0)
 end
-
-# _vectorize_like(x::Number, y::AbstractArray{LinearFractionalAffExpr}) = (ret = similar(y, typeof(x)); fill!(ret, x))
-# function _vectorize_like(x::AbstractArray{R}, y::AbstractArray{LinearFractionalAffExpr}) where R<:Number
-#     for i in 1:max(ndims(x),ndims(y))
-#         _size(x,i) == _size(y,i) || error("Unequal sizes for ranged constraint")
-#     end
-#     x
-# end
-#
-# function constructconstraint!(x::AbstractArray{LinearFractionalAffExpr}, lb, ub)
-#     LB = _vectorize_like(lb,x)
-#     UB = _vectorize_like(ub,x)
-#     ret = similar(x, LinearConstraint)
-#     map!(ret, eachindex(ret)) do i
-#         constructconstraint!(x[i], LB[i], UB[i])
-#     end
-# end

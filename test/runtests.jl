@@ -3,7 +3,7 @@ using LinearFractional
 using Clp
 using JuMP
 
-mytests = ["simpletest.jl", "arrayvars.jl"]
+mytests = ["simpletest.jl", "arrayvars.jl", "transforms.jl"]
 
 for mytest in mytests
     include(mytest)

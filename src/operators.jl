@@ -21,16 +21,17 @@
 # Number
 # Number--Number obviously already taken care of!
 # Number--Variable
-(+)(lhs::Number, rhs::LinearFractionalVariable) = AffExpr([rhs],[+1.],convert(Float64,lhs))
-(-)(lhs::Number, rhs::LinearFractionalVariable) = AffExpr([rhs],[-1.],convert(Float64,lhs))
-(*)(lhs::Number, rhs::LinearFractionalVariable) = AffExpr([rhs],[convert(Float64,lhs)], 0.)
+#(+)(lhs::Number, rhs::LinearFractionalVariable) = AffExpr([rhs],[+1.],convert(Float64,lhs))
+(+)(lhs::Number, rhs::LinearFractionalVariable) = LinearFractionalAffExpr(AffExpr(rhs.var) + lhs * rhs.model.t, rhs.model.t)
+(-)(lhs::Number, rhs::LinearFractionalVariable) = LinearFractionalAffExpr(-AffExpr(rhs.var) + lhs * rhs.model.t, rhs.model.t)
+(*)(lhs::Number, rhs::LinearFractionalVariable) = LinearFractionalAffExpr(lhs * AffExpr(rhs.var), rhs.model.t)
 # # Number--GenericNorm
 # (+){P,C,V}(lhs::Number, rhs::GenericNorm{P,C,V}) = GenericNormExpr{P,C,V}(copy(rhs),  one(C), convert(C,lhs))
 # (-){P,C,V}(lhs::Number, rhs::GenericNorm{P,C,V}) = GenericNormExpr{P,C,V}(copy(rhs), -one(C), convert(C,lhs))
 # (*){P,C,V}(lhs::Number, rhs::GenericNorm{P,C,V}) = GenericNormExpr{P,C,V}(copy(rhs),     lhs, zero(GenericAffExpr{C,V}))
 # # Number--GenericAffExpr
-# (+)(lhs::Number, rhs::GenericAffExpr) = GenericAffExpr(copy(rhs.vars),copy(rhs.coeffs),lhs+rhs.constant)
-# (-)(lhs::Number, rhs::GenericAffExpr) = GenericAffExpr(copy(rhs.vars),    -rhs.coeffs ,lhs-rhs.constant)
+(+)(lhs::Number, rhs::LinearFractionalAffExpr) = LinearFractionalAffExpr(rhs.afftrans + lhs * rhs.t, rhs.t)
+(-)(lhs::Number, rhs::LinearFractionalAffExpr) = -1.0 * lhs + rhs
 (*)(lhs::Number, rhs::LinearFractionalAffExpr) = LinearFractionalAffExpr(AffExpr(copy(rhs.afftrans.vars),[lhs*rhs.afftrans.coeffs[i] for i=1:length(rhs.afftrans.coeffs)],lhs*rhs.afftrans.constant), rhs.t)
 # # Number--QuadExpr
 # (+)(lhs::Number, rhs::QuadExpr) = QuadExpr(copy(rhs.qvars1),copy(rhs.qvars2),copy(rhs.qcoeffs),lhs+rhs.aff)
@@ -46,13 +47,13 @@
 # (-)(lhs::Variable) = AffExpr([lhs],[-1.0],0.0)
 # (*)(lhs::AbstractJuMPScalar) = lhs # make this more generic so extensions don't have to define unary multiplication for our macros
 # # Variable--Number
-# (+)(lhs::Variable, rhs::Number) = (+)( rhs,lhs)
-# (-)(lhs::Variable, rhs::Number) = (+)(-rhs,lhs)
-# (*)(lhs::Variable, rhs::Number) = (*)(rhs,lhs)
-# (/)(lhs::Variable, rhs::Number) = (*)(1./rhs,lhs)
+(+)(lhs::LinearFractionalVariable, rhs::Number) = (+)( rhs,lhs)
+(-)(lhs::LinearFractionalVariable, rhs::Number) = (+)(-rhs,lhs)
+(*)(lhs::LinearFractionalVariable, rhs::Number) = (*)(rhs,lhs)
+(/)(lhs::LinearFractionalVariable, rhs::Number) = (*)(1./rhs,lhs)
 # # Variable--Variable
 (+)(lhs::LinearFractionalVariable, rhs::LinearFractionalVariable) = AffExpr([lhs,rhs], [1.,+1.], 0.)
-# (-)(lhs::Variable, rhs::Variable) = AffExpr([lhs,rhs], [1.,-1.], 0.)
+(-)(lhs::LinearFractionalVariable, rhs::LinearFractionalVariable) = AffExpr([lhs,rhs], [1.,-1.], 0.)
 # (*)(lhs::Variable, rhs::Variable) = QuadExpr([lhs],[rhs],[1.],AffExpr(Variable[],Float64[],0.))
 # # Variable--Norm
 # (+){C,V<:Variable}(lhs::Variable, rhs::GenericNorm{2,C,V}) = GenericSOCExpr{C,V}(copy(rhs),  one(C), GenericAffExpr{C,V}(lhs))
@@ -105,15 +106,15 @@
 # #
 # # GenericAffExpr
 # (+)(lhs::GenericAffExpr) = lhs
-# (-)(lhs::GenericAffExpr) = GenericAffExpr(lhs.vars, -lhs.coeffs, -lhs.constant)
+(-)(lhs::LinearFractionalAffExpr) = LinearFractionalAffExpr(AffExpr(lhs.afftrans.vars, -lhs.afftrans.coeffs, -lhs.afftrans.constant), lhs.t)
 # (*)(lhs::GenericAffExpr) = lhs
 # # AffExpr--Number
 # (+)(lhs::GenericAffExpr, rhs::Number) = (+)(+rhs,lhs)
 # (-)(lhs::GenericAffExpr, rhs::Number) = (+)(-rhs,lhs)
 (*)(lhs::LinearFractionalAffExpr, rhs::Number) = (*)(rhs,lhs)
+(/)(lhs::LinearFractionalAffExpr, rhs::Number) = (*)(1.0/rhs,lhs)
 
 
-# (/)(lhs::GenericAffExpr, rhs::Number) = (*)(1.0/rhs,lhs)
 # function (^)(lhs::Union{Variable,AffExpr}, rhs::Integer)
 #     if rhs == 2
 #         return lhs*lhs
