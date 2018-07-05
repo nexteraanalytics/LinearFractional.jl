@@ -19,28 +19,6 @@ function constructvariable!(m::LinearFractionalModel, _error::Function, lowerbou
 end
 
 
-function constructconstraint!(aff::LinearFractionalAffExpr, sense::Symbol)
-    #offset = aff.constant * aff.t
-    #aff.constant = 0.0
-
-    if sense == :(<=) || sense == :≤
-        return LinearConstraint(aff, -Inf, 0)
-    elseif sense == :(>=) || sense == :≥
-        return LinearConstraint(aff, 0, Inf)
-    elseif sense == :(==)
-        return LinearConstraint(aff, 0, 0)
-    else
-        error("Cannot handle ranged constraint")
-    end
-end
-
-
-function constructconstraint!(aff::LinearFractionalAffExpr, lb, ub)
-#    LinearConstraint(aff, lb-offset, ub-offset)
-    return LinearConstraint(aff, lb, ub)
-    # LinearConstraint(aff - lb * aff.t, 0, Inf)
-    # LinearConstraint(aff - ub * aff.t, -Inf, 0)
-end
 
 
 macro objective(m, args...)

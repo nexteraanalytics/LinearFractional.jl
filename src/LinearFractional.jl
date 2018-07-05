@@ -1,3 +1,5 @@
+__precompile__()
+
 module LinearFractional
 
 using JuMP
@@ -27,7 +29,7 @@ export LinearFractionalModel,
     @denominator,
     @numerator
 
-@with_kw mutable struct LinearFractionalModel
+@with_kw mutable struct LinearFractionalModel <: JuMP.AbstractModel
     transformedmodel::JuMP.Model
     t::JuMP.Variable
     denom::AffExpr
@@ -43,9 +45,10 @@ function LinearFractionalModel(;solver::AbstractMathProgSolver=ClpSolver())
 end
 
 
-struct LinearFractionalVariable
+struct LinearFractionalVariable <: JuMP.AbstractJuMPScalar
+    ## Variable in the untransformed space
     model::LinearFractionalModel
-    var::JuMP.Variable
+    var::JuMP.Variable ## Internal variable in the transformed space
 end
 
 
@@ -67,6 +70,11 @@ LinearFractionalVariable(m::Model,lower::Number,upper::Number,cat::Symbol,objcoe
 
 getvalue(x::LinearFractionalVariable) = getvalue(x.var)/getvalue(x.model.t)
 
+# Need to define Base.one to get dot() for free, but I don't think we can
+# do this without knowing the model (to get t)
+# Base.one(::Type{LinearFractionalVariable}) = LinearFractionalAffExpr(Variable[],Float64[],1.0)
+
+
 storecontainerdata(m::LinearFractionalModel, variable, varname, idxsets, idxpairs, condition) =
     m.transformedmodel.varData[variable] = JuMPContainerData(varname, map(collect,idxsets), idxpairs, condition)
 
@@ -76,10 +84,6 @@ struct LinearFractionalAffExpr
 end
 
 
-struct LinearFractionalLinearConstraint
-    lctrans::Vector{LinearConstraint}  # 1 or 2 (lb, ub)
-end
-
 
 function AffExpr(vars::Vector{LinearFractionalVariable}, coeffs, constant)
     t = vars[1].model.t
@@ -88,20 +92,6 @@ function AffExpr(vars::Vector{LinearFractionalVariable}, coeffs, constant)
 end
 
 
-function LinearConstraint(aff::LinearFractionalAffExpr, lb, ub)
-    cons = Vector{LinearConstraint}()
-    if lb == ub
-         push!(cons, LinearConstraint(aff.afftrans - aff.t * lb, 0, 0))
-    else
-        if !isinf(lb)
-            push!(cons, LinearConstraint(aff.afftrans - aff.t * lb, 0, Inf))
-        end
-        if !isinf(ub)
-            push!(cons, LinearConstraint(aff.afftrans - aff.t * ub, -Inf, 0))
-        end
-    end
-    LinearFractionalLinearConstraint(cons)
-end
 
 
 function addvariable(model::LinearFractionalModel, lb::Number, ub::Number, basename::String)
@@ -116,11 +106,7 @@ end
 addvariable(model::LinearFractionalModel, basename::String) = addvariable(model, -Inf, Inf, basename)
 
 
-function addconstraint(model::LinearFractionalModel, constraint::LinearFractionalLinearConstraint)
-    for con in constraint.lctrans
-        addconstraint(model.transformedmodel, con)
-    end
-end
+
 
 
 function setdenominator!(m::LinearFractionalModel, aff::LinearFractionalAffExpr)
@@ -180,6 +166,7 @@ function setobjective(m::LinearFractionalModel, sense::Symbol, numer::LinearFrac
 end
 
 include("operators.jl")
+include("constraints.jl")
 include("macros.jl")
 include("parseexpr.jl")
 
