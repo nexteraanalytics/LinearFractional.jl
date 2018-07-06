@@ -31,7 +31,7 @@
 # (*){P,C,V}(lhs::Number, rhs::GenericNorm{P,C,V}) = GenericNormExpr{P,C,V}(copy(rhs),     lhs, zero(GenericAffExpr{C,V}))
 # # Number--GenericAffExpr
 (+)(lhs::Number, rhs::LinearFractionalAffExpr) = LinearFractionalAffExpr(rhs.afftrans + lhs * rhs.t, rhs.t)
-(-)(lhs::Number, rhs::LinearFractionalAffExpr) = -1.0 * lhs + rhs
+(-)(lhs::Number, rhs::LinearFractionalAffExpr) = LinearFractionalAffExpr(lhs * rhs.t - rhs.afftrans, rhs.t)
 (*)(lhs::Number, rhs::LinearFractionalAffExpr) = LinearFractionalAffExpr(AffExpr(copy(rhs.afftrans.vars),[lhs*rhs.afftrans.coeffs[i] for i=1:length(rhs.afftrans.coeffs)],lhs*rhs.afftrans.constant), rhs.t)
 # # Number--QuadExpr
 # (+)(lhs::Number, rhs::QuadExpr) = QuadExpr(copy(rhs.qvars1),copy(rhs.qvars2),copy(rhs.qcoeffs),lhs+rhs.aff)
@@ -109,10 +109,10 @@
 (-)(lhs::LinearFractionalAffExpr) = LinearFractionalAffExpr(AffExpr(lhs.afftrans.vars, -lhs.afftrans.coeffs, -lhs.afftrans.constant), lhs.t)
 # (*)(lhs::GenericAffExpr) = lhs
 # # AffExpr--Number
-# (+)(lhs::GenericAffExpr, rhs::Number) = (+)(+rhs,lhs)
-# (-)(lhs::GenericAffExpr, rhs::Number) = (+)(-rhs,lhs)
-(*)(lhs::LinearFractionalAffExpr, rhs::Number) = (*)(rhs,lhs)
-(/)(lhs::LinearFractionalAffExpr, rhs::Number) = (*)(1.0/rhs,lhs)
+(+)(lhs::LinearFractionalAffExpr, rhs::Number) = LinearFractionalAffExpr((+)(+rhs * lhs.t,lhs.afftrans), lhs.t)
+(-)(lhs::LinearFractionalAffExpr, rhs::Number) = LinearFractionalAffExpr((+)(-rhs * lhs.t,lhs.afftrans), lhs.t)
+(*)(lhs::LinearFractionalAffExpr, rhs::Number) = LinearFractionalAffExpr((*)(rhs * lhs.afftrans), lhs.t)
+(/)(lhs::LinearFractionalAffExpr, rhs::Number) = LinearFractionalAffExpr((*)(1.0/rhs * lhs.afftrans), lhs.t)
 
 
 # function (^)(lhs::Union{Variable,AffExpr}, rhs::Integer)
@@ -132,6 +132,7 @@
 # end
 # AffExpr--Variable
 (+)(lhs::LinearFractionalAffExpr, rhs::LinearFractionalVariable) = LinearFractionalAffExpr((+)(lhs.afftrans,rhs.var), lhs.t)
+(-)(lhs::LinearFractionalAffExpr, rhs::LinearFractionalVariable) = LinearFractionalAffExpr((-)(lhs.afftrans,rhs.var), lhs.t)
 (+)(lhs::AffExpr, rhs::LinearFractionalAffExpr) = LinearFractionalAffExpr((+)(lhs, rhs.afftrans), rhs.t)
 (+)(lhs::LinearFractionalAffExpr, rhs::LinearFractionalAffExpr) = LinearFractionalAffExpr((+)(lhs.afftrans, rhs.afftrans), rhs.t)
 (+)(lhs::LinearFractionalAffExpr, rhs::Float64) = LinearFractionalAffExpr((+)(lhs.afftrans, lhs.t * rhs), lhs.t)
@@ -147,8 +148,8 @@
 # (+){P,C,V}(lhs::GenericAffExpr{C,V}, rhs::GenericNorm{P,C,V}) = GenericNormExpr{P,C,V}(copy(rhs),  one(C), copy(lhs))
 # (-){P,C,V}(lhs::GenericAffExpr{C,V}, rhs::GenericNorm{P,C,V}) = GenericNormExpr{P,C,V}(copy(rhs), -one(C), copy(lhs))
 # # AffExpr--AffExpr
-# (+){C,V<:JuMPTypes}(lhs::GenericAffExpr{C,V}, rhs::GenericAffExpr{C,V}) = (operator_warn(lhs,rhs); GenericAffExpr(vcat(lhs.vars,rhs.vars),vcat(lhs.coeffs, rhs.coeffs),lhs.constant+rhs.constant))
-# (-){C,V<:JuMPTypes}(lhs::GenericAffExpr{C,V}, rhs::GenericAffExpr{C,V}) = GenericAffExpr(vcat(lhs.vars,rhs.vars),vcat(lhs.coeffs,-rhs.coeffs),lhs.constant-rhs.constant)
+(+)(lhs::LinearFractionalAffExpr, rhs::LinearFractionalAffExpr) = LinearFractionalAffExpr(lhs.afftrans + rhs.afftrans, lhs.t)
+(-)(lhs::LinearFractionalAffExpr, rhs::LinearFractionalAffExpr) = LinearFractionalAffExpr(lhs.afftrans - rhs.afftrans, lhs.t)
 # function (*)(lhs::AffExpr, rhs::AffExpr)
 #     ret = QuadExpr(Variable[],Variable[],Float64[],AffExpr(Variable[],Float64[],0.))
 #

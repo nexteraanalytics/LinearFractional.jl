@@ -30,18 +30,11 @@ export LinearFractionalModel,
     @numerator
 
 @with_kw mutable struct LinearFractionalModel <: JuMP.AbstractModel
-    transformedmodel::JuMP.Model
-    t::JuMP.Variable
-    denom::AffExpr
-    dictList::Vector=Any[]
-end
-
-
-function LinearFractionalModel(;solver::AbstractMathProgSolver=ClpSolver())
-    model = JuMP.Model(solver=solver)
-    t = @variable(model, lowerbound=eps(Float64), basename="t")
-    denom = AffExpr()
-    LinearFractionalModel(model, t, denom, Any[])
+    solver
+    transformedmodel=JuMP.Model(solver=solver)
+    t=@variable(transformedmodel, lowerbound=eps(Float64), basename="t")
+    denom=AffExpr()
+    dictList=Any[]
 end
 
 
@@ -75,6 +68,7 @@ LinearFractionalVariable(m::Model,lower::Number,upper::Number,cat::Symbol,objcoe
     LinearFractionalVariable(m, lower, upper, cat, objcoef, constraints.innerArray, coefficients, name, value)
 
 getvalue(x::LinearFractionalVariable) = getvalue(x.var)/getvalue(x.model.t)
+getvalue(aff::LinearFractionalAffExpr) = getvalue(aff.afftrans)/getvalue(aff.t)
 
 # Need to define Base.one to get dot() for free, but I don't think we can
 # do this without knowing the model (to get t)
@@ -115,9 +109,6 @@ end
 
 
 addvariable(model::LinearFractionalModel, basename::String) = addvariable(model, -Inf, Inf, basename)
-
-
-
 
 
 function setdenominator!(m::LinearFractionalModel, aff::LinearFractionalAffExpr)
