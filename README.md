@@ -10,27 +10,21 @@
 LinearFractional is an extension for [JuMP](https://github.com/JuliaOpt/JuMP.jl) to optimize linear programs with fractional objectives.  LinearFractional implements the [Charnes-Cooper transformation](https://en.wikipedia.org/wiki/Linear-fractional_programming) behind-the-scenes so that the user only needs to specify the problem as any ordinary JuMP problem, but specifying a numerator and denominator instead of a single objective function.
 
 
-<!-- ## Installation
+## Installation
 
-To install the release version, simply run
-
-```julia
-Pkg.add("Mocha")
-```
-
-on the Julia console. To install the latest development version, run the following command instead:
+To install the latest development version, run the following command:
 
 ```julia
-Pkg.clone("https://github.com/pluskid/Mocha.jl.git")
+Pkg.clone("PATH_TO_GIT_REPO")
 ```
 
 Then you can run the built-in unit tests with
 
 ```julia
-Pkg.test("Mocha")
+Pkg.test("LinearFractional")
 ```
 
-to verify that everything is functioning properly on your machine. -->
+to verify that everything is functioning properly on your machine.
 
 ## Basic Example
 
