@@ -32,7 +32,7 @@ export LinearFractionalModel,
 @with_kw mutable struct LinearFractionalModel <: JuMP.AbstractModel
     solver
     transformedmodel=JuMP.Model(solver=solver)
-    t=@variable(transformedmodel, lowerbound=eps(Float64), basename="t")
+    t=@variable(transformedmodel, lowerbound=1e3*eps(Float64), basename="t")
     denom=AffExpr()
     dictList=Any[]
 end
@@ -97,12 +97,11 @@ function AffExpr(vars::Vector{LinearFractionalVariable}, coeffs, constant)
 end
 
 
-
-
 function addvariable(model::LinearFractionalModel, lb::Number, ub::Number, basename::String)
     var = @variable(model.transformedmodel, basename=basename)
-    if !isinf(lb) || !isinf(ub)
-        addconstraint(model, lb, ub)
+    if !isinf(lb)# || !isinf(ub)
+        con = LinearConstraint(LinearFractionalAffExpr([var], [1], [0]), lb, ub)
+        addconstraint(model, con)
     end
     return LinearFractionalVariable(model, var)
 end
@@ -114,12 +113,6 @@ addvariable(model::LinearFractionalModel, basename::String) = addvariable(model,
 function setdenominator!(m::LinearFractionalModel, aff::LinearFractionalAffExpr)
     addconstraint(m.transformedmodel, LinearConstraint(aff.afftrans, 1, 1))
     m.denom = aff.afftrans
-end
-
-
-function setobjective(m::LinearFractionalModel, sense::Symbol, numer::LinearFractionalAffExpr, denom::LinearFractionalAffExpr)
-    JuMP.setobjective(m.transformedmodel, sense, numer.afftrans)
-    setdenominator!(m, denom)
 end
 
 
@@ -154,17 +147,10 @@ end
 
 setname(v::LinearFractionalVariable, name) = setname(v.var, name)
 
+
 function setobjective(m::LinearFractionalModel, sense::Symbol, numer::LinearFractionalAffExpr, denom::LinearFractionalAffExpr)
-    if sense == :Min
-        moisense = MOI.MinSense
-    else
-        @assert sense == :Max
-        moisense = MOI.MaxSense
-    end
-    MOI.set!(m.transformedmodel.moibackend, MOI.ObjectiveSense(), moisense)
-    MOI.set!(m.transformedmodel.moibackend, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), MOI.ScalarAffineFunction(numer.afftrans))
+    JuMP.setobjective(m.transformedmodel, sense, numer.afftrans)
     setdenominator!(m, denom)
-    nothing
 end
 
 include("operators.jl")

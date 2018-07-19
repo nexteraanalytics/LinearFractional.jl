@@ -148,7 +148,7 @@
 # (+){P,C,V}(lhs::GenericAffExpr{C,V}, rhs::GenericNorm{P,C,V}) = GenericNormExpr{P,C,V}(copy(rhs),  one(C), copy(lhs))
 # (-){P,C,V}(lhs::GenericAffExpr{C,V}, rhs::GenericNorm{P,C,V}) = GenericNormExpr{P,C,V}(copy(rhs), -one(C), copy(lhs))
 # # AffExpr--AffExpr
-(+)(lhs::LinearFractionalAffExpr, rhs::LinearFractionalAffExpr) = LinearFractionalAffExpr(lhs.afftrans + rhs.afftrans, lhs.t)
+# (+)(lhs::LinearFractionalAffExpr, rhs::LinearFractionalAffExpr) = LinearFractionalAffExpr(lhs.afftrans + rhs.afftrans, lhs.t)
 (-)(lhs::LinearFractionalAffExpr, rhs::LinearFractionalAffExpr) = LinearFractionalAffExpr(lhs.afftrans - rhs.afftrans, lhs.t)
 # function (*)(lhs::AffExpr, rhs::AffExpr)
 #     ret = QuadExpr(Variable[],Variable[],Float64[],AffExpr(Variable[],Float64[],0.))

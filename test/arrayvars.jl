@@ -24,9 +24,34 @@ end
     @denominator(lfp,  -x[1] + 20*x[2] + 4)
     @test solve(lfp) == :Optimal
     @test all(getvalue(x) .≈ [-4.0, -0.2])
+end
 
-    # (sum(a[i] * getvalue(x)[i] for i in 1:2) + 2) / (-getvalue(x)[1] + 20*getvalue(x)[2] + 4)
-    # getobjectivevalue(lfp)
-    #
-    # f(x) = (sum(a[i] * x[i] for i in 1:2) + 2) / (-x[1] + 20*x[2] + 4)
+
+@testset "Match LP" begin
+    lfp = LinearFractionalModel(solver=ClpSolver())
+    x = @variable(lfp, [i=1:2], basename="x")
+    a = [4, 2]
+    upbs = [4, 20]
+    lbs = [-1, -10]
+    @constraint(lfp, x[1] + x[2] <= 5.0)
+    @constraint(lfp, x[1] - 2*x[2] >= 10.0)
+    @constraint(lfp, [i=1:2], x[i] <= upbs[i])
+    @constraint(lfp, [i=1:2], x[i] >= lbs[i])
+    @numerator(lfp,  :Min, sum(a[i] * x[i] for i in 1:2))
+    @denominator(lfp,  sum(x))
+    solve(lfp)
+
+    m = Model(solver=ClpSolver())
+    xm = @variable(m, [i=1:2], basename="x")
+    a = [4, 2]
+    upbs = [4, 20]
+    lbs = [-1,-10]
+    @constraint(m, xm[1] + xm[2] <= 5.0)
+    @constraint(m, xm[1] - 2*xm[2] >= 10.0)
+    @constraint(m, [i=1:2], xm[i] <= upbs[i])
+    @constraint(m, [i=1:2], xm[i] >= lbs[i])
+    @constraint(m, sum(xm) == 1)
+    @objective(m,  :Min, sum(a[i] * xm[i] for i in 1:2))
+    solve(m)
+    @test getvalue(xm) ≈ getvalue([xi.var for xi in x])
 end
