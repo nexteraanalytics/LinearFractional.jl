@@ -88,8 +88,6 @@ storecontainerdata(m::LinearFractionalModel, variable, varname, idxsets, idxpair
     m.transformedmodel.varData[variable] = JuMPContainerData(varname, map(collect,idxsets), idxpairs, condition)
 
 
-
-
 function AffExpr(vars::Vector{LinearFractionalVariable}, coeffs, constant)
     t = vars[1].model.t
     ys = [var.var for var in vars]
@@ -116,12 +114,18 @@ function setdenominator!(m::LinearFractionalModel, aff::LinearFractionalAffExpr)
 end
 
 
+function setdenominator!(m::LinearFractionalModel, x::Float64)
+    @constraint(m.transformedmodel, m.t == 1/x)
+    m.denom = x
+end
+
+
 function solve(model::LinearFractionalModel)
     JuMP.solve(model.transformedmodel)
 end
 
 
-getobjectivevalue(model::LinearFractionalModel) = getobjectivevalue(model.transformedmodel)/getvalue(model.denom)
+getobjectivevalue(model::LinearFractionalModel) = getobjectivevalue(model.transformedmodel)
 
 
 validmodel(model::LinearFractionalModel, name) = nothing
@@ -152,6 +156,10 @@ function setobjective(m::LinearFractionalModel, sense::Symbol, numer::LinearFrac
     JuMP.setobjective(m.transformedmodel, sense, numer.afftrans)
     setdenominator!(m, denom)
 end
+
+# So that x can be a number or a Variable and we can still get the value
+JuMP.getvalue(x::Number) = x
+JuMP.getvalue(x::Vector{T}) where T <: Number = x
 
 include("operators.jl")
 include("constraints.jl")
