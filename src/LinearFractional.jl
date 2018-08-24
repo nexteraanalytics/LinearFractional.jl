@@ -157,9 +157,6 @@ function setobjective(m::LinearFractionalModel, sense::Symbol, numer::LinearFrac
     setdenominator!(m, denom)
 end
 
-# So that x can be a number or a Variable and we can still get the value
-JuMP.getvalue(x::Number) = x
-JuMP.getvalue(x::Vector{T}) where T <: Number = x
 
 include("operators.jl")
 include("constraints.jl")
