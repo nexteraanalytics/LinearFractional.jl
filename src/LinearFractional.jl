@@ -45,7 +45,7 @@ struct LinearFractionalVariable <: JuMP.AbstractJuMPScalar
 end
 
 
-struct LinearFractionalAffExpr
+struct LinearFractionalAffExpr <: JuMP.AbstractJuMPScalar
     afftrans::AffExpr
     t::JuMP.Variable
 end
