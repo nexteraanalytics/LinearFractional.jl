@@ -3,7 +3,6 @@ __precompile__()
 module LinearFractional
 
 using JuMP
-using JuMP
 import JuMP:
     getobjectivevalue,
     getvalue,
@@ -22,50 +21,20 @@ import JuMP:
     setobjective,
     storecontainerdata
 import MathProgBase.AbstractMathProgSolver
-importall Base.Operators
+import Base:+, -, *, /
 using Parameters
 
 export LinearFractionalModel,
     @denominator,
     @numerator
 
-@with_kw mutable struct LinearFractionalModel <: JuMP.AbstractModel
-    solver
-    transformedmodel=JuMP.Model(solver=solver)
-    t=@variable(transformedmodel, lowerbound=1e3*eps(Float64), basename="t")
-    denom=AffExpr()
-    dictList=Any[]
-end
 
+include("types.jl")
+include("operators.jl")
+include("constraints.jl")
+include("macros.jl")
+include("parseexpr.jl")
 
-struct LinearFractionalVariable <: JuMP.AbstractJuMPScalar
-    ## Variable in the untransformed space
-    model::LinearFractionalModel
-    var::JuMP.Variable ## Internal variable in the transformed space
-end
-
-
-struct LinearFractionalAffExpr
-    afftrans::AffExpr
-    t::JuMP.Variable
-end
-
-
-function LinearFractionalVariable(m::LinearFractionalModel, lower::Number, upper::Number, cat::Symbol, name::AbstractString="", value::Number=NaN)
-    var = JuMP.Variable(m.transformedmodel, -Inf, Inf, cat, name, value)
-    lfvar = LinearFractionalVariable(m, var)
-    if !isinf(lower)
-        setlowerbound(lfvar, lower)
-    end
-    if !isinf(upper)
-        setupperbound(lfvar, upper)
-    end
-    return lfvar
-end
-
-LinearFractionalVariable(m::Model,lower::Number,upper::Number,cat::Symbol,objcoef::Number,
-    constraints::JuMPArray,coefficients::Vector{Float64}, name::AbstractString="", value::Number=NaN) =
-    LinearFractionalVariable(m, lower, upper, cat, objcoef, constraints.innerArray, coefficients, name, value)
 
 getvalue(x::LinearFractionalVariable) = getvalue(x.var)/getvalue(x.model.t)
 getvalue(aff::LinearFractionalAffExpr) = getvalue(aff.afftrans)/getvalue(aff.t)
@@ -157,13 +126,5 @@ function setobjective(m::LinearFractionalModel, sense::Symbol, numer::LinearFrac
     setdenominator!(m, denom)
 end
 
-# So that x can be a number or a Variable and we can still get the value
-JuMP.getvalue(x::Number) = x
-JuMP.getvalue(x::Vector{T}) where T <: Number = x
-
-include("operators.jl")
-include("constraints.jl")
-include("macros.jl")
-include("parseexpr.jl")
 
 end

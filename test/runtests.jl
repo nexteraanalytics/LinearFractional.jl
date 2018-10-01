@@ -1,4 +1,4 @@
-using Base.Test
+using Test
 using LinearFractional
 using Clp
 using JuMP

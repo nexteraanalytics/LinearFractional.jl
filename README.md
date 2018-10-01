@@ -1,11 +1,8 @@
 # LinearFractional
 
-<!-- [![Build Status](https://img.shields.io/travis/pluskid/Mocha.jl.svg?style=flat&branch=master)](https://travis-ci.org/pluskid/Mocha.jl)
-[![Documentation Status](https://readthedocs.org/projects/mochajl/badge/?version=latest)](http://mochajl.readthedocs.org/)
-[![Mocha](http://pkg.julialang.org/badges/Mocha_0.6.svg)](http://pkg.julialang.org/?pkg=Mocha&ver=0.6)
-[![Coverage Status](https://img.shields.io/coveralls/pluskid/Mocha.jl.svg?style=flat)](https://coveralls.io/r/pluskid/Mocha.jl?branch=master) -->
+<!-- [![Coverage Status](https://coveralls.io/repos/focusenergy/LinearFractional.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/focusenergy/LinearFractional.jl?branch=master) -->
+[![Travis Build Status](https://travis-ci.org/focusenergy/LinearFractional.jl.svg?branch=master)](https://travis-ci.org/focusenergy/LinearFractional.jl)
 [![License](http://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat)](LICENSE.md)
-<!--[![Build status](https://ci.appveyor.com/api/projects/status/342vcj5lj2jyegsp?svg=true)](https://ci.appveyor.com/project/pluskid/mocha-jl)-->
 
 LinearFractional is an extension for [JuMP](https://github.com/JuliaOpt/JuMP.jl) to optimize linear programs with fractional objectives.  LinearFractional implements the [Charnes-Cooper transformation](https://en.wikipedia.org/wiki/Linear-fractional_programming) behind-the-scenes so that the user only needs to specify the problem as any ordinary JuMP problem, but specifying a numerator and denominator instead of a single objective function.
 
@@ -15,7 +12,8 @@ LinearFractional is an extension for [JuMP](https://github.com/JuliaOpt/JuMP.jl)
 To install the latest development version, run the following command:
 
 ```julia
-Pkg.clone("https://github.com/focusenergy/LinearFractional.jl.git")
+using Pkg
+Pkg.add("LinearFractional")
 ```
 
 Then you can run the built-in unit tests with
