@@ -50,7 +50,7 @@
 (+)(lhs::LinearFractionalVariable, rhs::Number) = (+)( rhs,lhs)
 (-)(lhs::LinearFractionalVariable, rhs::Number) = (+)(-rhs,lhs)
 (*)(lhs::LinearFractionalVariable, rhs::Number) = (*)(rhs,lhs)
-(/)(lhs::LinearFractionalVariable, rhs::Number) = (*)(1./rhs,lhs)
+(/)(lhs::LinearFractionalVariable, rhs::Number) = (*)(1.0/rhs,lhs)
 # # Variable--Variable
 (+)(lhs::LinearFractionalVariable, rhs::LinearFractionalVariable) = AffExpr([lhs,rhs], [1.,+1.], 0.)
 (-)(lhs::LinearFractionalVariable, rhs::LinearFractionalVariable) = AffExpr([lhs,rhs], [1.,-1.], 0.)

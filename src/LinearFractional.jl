@@ -22,7 +22,7 @@ import JuMP:
     setobjective,
     storecontainerdata
 import MathProgBase.AbstractMathProgSolver
-importall Base.Operators
+import Base:+, -, *, /
 using Parameters
 
 export LinearFractionalModel,
