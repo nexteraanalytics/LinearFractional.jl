@@ -15,7 +15,7 @@ LinearFractional is an extension for [JuMP](https://github.com/JuliaOpt/JuMP.jl)
 To install the latest development version, run the following command:
 
 ```julia
-Pkg.clone("PATH_TO_GIT_REPO")
+Pkg.clone("https://github.com/focusenergy/LinearFractional.jl.git")
 ```
 
 Then you can run the built-in unit tests with
@@ -32,6 +32,7 @@ This toy example refers to the reference problem in http://www.ams.jhu.edu/~cast
 
 ```julia
 using LinearFractional
+using JuMP
 using Clp
 
 lfp = LinearFractionalModel(solver=ClpSolver())
@@ -47,7 +48,3 @@ getobjectivevalue(lfp)
 getvalue(x1)
 getvalue(x2)
 ```
-
-<!-- ## Documentation
-
-The Mocha documentation is hosted at [readthedocs.org](http://mochajl.readthedocs.org/). -->
