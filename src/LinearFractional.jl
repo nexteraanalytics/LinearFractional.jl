@@ -3,7 +3,6 @@ __precompile__()
 module LinearFractional
 
 using JuMP
-using JuMP
 import JuMP:
     getobjectivevalue,
     getvalue,

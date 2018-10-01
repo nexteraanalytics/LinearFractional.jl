@@ -13,7 +13,7 @@ To install the latest development version, run the following command:
 
 ```julia
 using Pkg
-Pkg.add("https://github.com/focusenergy/LinearFractional.jl.git")
+Pkg.add("LinearFractional")
 ```
 
 Then you can run the built-in unit tests with
