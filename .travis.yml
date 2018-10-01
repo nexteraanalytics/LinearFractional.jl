@@ -18,11 +18,9 @@ notifications:
 before_script:
   - export PATH=$HOME/.local/bin:$PATH
 
-# After 0.18.3 is tagged in METADATA.jl, we can specify that minimum version and remove
-# `Pkg.add(PackageSpec(name="JuMP", rev="release-0.18"))`
 script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-  - julia --check-bounds=yes -e 'using Pkg; Pkg.add(PackageSpec(name="JuMP", rev="release-0.18")); Pkg.clone(pwd()); Pkg.test("LinearFractional"; coverage=true)'
+  - julia --check-bounds=yes -e 'using Pkg; Pkg.clone(pwd()); Pkg.test("LinearFractional"; coverage=true)'
 
 # To enable after we get coveralls.io approved and add docs
 # after_success:
