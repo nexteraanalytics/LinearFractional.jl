@@ -20,7 +20,7 @@ before_script:
 
 script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-  - julia --check-bounds=yes -e 'using Pkg; Pkg.clone(pwd()); Pkg.test("LinearFractional"; coverage=true)'
+  - julia --check-bounds=yes -e 'using Pkg; Pkg.add(pwd()); Pkg.test("LinearFractional"; coverage=true)'
 
 # To enable after we get coveralls.io approved and add docs
 # after_success:
