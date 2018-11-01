@@ -39,9 +39,8 @@ include("parseexpr.jl")
 getvalue(x::LinearFractionalVariable) = getvalue(x.var)/getvalue(x.model.t)
 getvalue(aff::LinearFractionalAffExpr) = getvalue(aff.afftrans)/getvalue(aff.t)
 
-# Need to define Base.one to get dot() for free, but I don't think we can
-# do this without knowing the model (to get t)
-# Base.one(::Type{LinearFractionalVariable}) = LinearFractionalAffExpr(Variable[],Float64[],1.0)
+Base.one(::Type{LinearFractionalVariable}) = 1.0
+Base.one(::LinearFractionalVariable) = one(LinearFractionalVariable)
 Base.sum(xs::Array{LinearFractionalAffExpr}) = LinearFractionalAffExpr(sum(x.afftrans for x in xs), xs[1].t)
 function Base.sum(xs::Array{LinearFractionalAffExpr}, dim)
     s = sum(collect(x.afftrans for x in xs), dim)

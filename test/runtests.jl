@@ -1,5 +1,6 @@
 using Test
 using LinearFractional
+using LinearAlgebra
 using Clp
 using JuMP
 
