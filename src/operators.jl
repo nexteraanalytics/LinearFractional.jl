@@ -58,7 +58,8 @@
 # # Variable--Norm
 # (+){C,V<:Variable}(lhs::Variable, rhs::GenericNorm{2,C,V}) = GenericSOCExpr{C,V}(copy(rhs),  one(C), GenericAffExpr{C,V}(lhs))
 # (-){C,V<:Variable}(lhs::Variable, rhs::GenericNorm{2,C,V}) = GenericSOCExpr{C,V}(copy(rhs), -one(C), GenericAffExpr{C,V}(lhs))
-# # Variable--AffExpr
+# Variable--AffExpr
+(-)(lhs::LinearFractionalVariable, rhs::LinearFractionalAffExpr) = -rhs + lhs
 # (+){C,V<:JuMPTypes}(lhs::V, rhs::GenericAffExpr{C,V}) =
 #     GenericAffExpr{C,V}(vcat(rhs.vars,lhs),vcat(rhs.coeffs,one(C)), rhs.constant)
 # (-){C,V<:JuMPTypes}(lhs::V, rhs::GenericAffExpr{C,V}) =
