@@ -41,6 +41,8 @@ getvalue(aff::LinearFractionalAffExpr) = getvalue(aff.afftrans)/getvalue(aff.t)
 
 Base.one(::Type{LinearFractionalVariable}) = 1.0
 Base.one(::LinearFractionalVariable) = one(LinearFractionalVariable)
+Base.zero(::Type{LinearFractionalVariable}) = 0.0
+Base.zero(::LinearFractionalVariable) = zero(LinearFractionalVariable)
 Base.sum(xs::Array{LinearFractionalAffExpr}) = LinearFractionalAffExpr(sum(x.afftrans for x in xs), xs[1].t)
 function Base.sum(xs::Array{LinearFractionalAffExpr}, dim)
     s = sum(collect(x.afftrans for x in xs), dim)
