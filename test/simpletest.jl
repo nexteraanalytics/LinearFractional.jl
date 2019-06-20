@@ -9,11 +9,7 @@
     @constraint(lfp, x2 <= 6)
     @numerator(lfp,  Min, -2x1 + x2 + 2)
     @denominator(lfp,  x1 + 3x2 + 4)
-
     optimize!(lfp)
-
-
-
 
     @test termination_status(lfp.model) === MOI.OPTIMAL
 

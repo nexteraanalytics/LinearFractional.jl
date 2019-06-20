@@ -1,5 +1,4 @@
 # Approach based on JuMP/test/JuMPExtension.jl
-
 module LinearFractional
 
 using MathOptInterface
@@ -522,7 +521,11 @@ end
 function value(v::VariableRef)::Float64
     return MOI.get(owner_model(v), MOI.VariablePrimal(), v)
 end
-MOI.get(, MOI.VariablePrimal(), v)
+
+# This doesn't work because `owner_model(v)` returns the inner model, not the LinearFractionalModel
+function MOI.get(m::LinearFractionalModel, MOI.VariablePrimal(), v)
+    MOI.get(m.model, MOI.VariablePrimal(), v)/MOI.get(m.model, MOI.VariablePrimal(), m.t)
+end
 
 
 end
