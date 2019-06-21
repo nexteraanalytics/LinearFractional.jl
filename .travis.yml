@@ -6,6 +6,13 @@ julia:
 os:
   - linux
 
+sudo: false
+addons:
+  apt_packages:
+    - gfortran
+    - liblapack-dev
+    - libblas-dev
+
 matrix:
  allow_failures:
  - julia: nightly
