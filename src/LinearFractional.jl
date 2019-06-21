@@ -59,12 +59,7 @@ import Base.convert
 
 using MacroTools
 
-export @denominator,
-    @numerator,
-    LinearFractionalModel
-
-#include("macros.jl")
-#include("parse_expr.jl")
+export LinearFractionalModel
 
 macro forward(ex, fs)
     T, field = ex.args[1], ex.args[2].value
@@ -289,8 +284,6 @@ Convert a GenericAffExpr of LinearFractionalVariableRef to a GenericAffExpr of V
 Note that this does not perform the constant -> t x constant transformation since this
 is taken care of in add_constaint.  The separation allows this transformation to
 be used in `set_denominator`
-
-Note that this does not convert
 """
 function convert(::Type{GenericAffExpr{Float64,VariableRef}}, expr_lf::GenericAffExpr{Float64,LinearFractionalVariableRef})
     GenericAffExpr{Float64,VariableRef}(expr_lf.constant, [Pair(term.vref, coef) for (term, coef) in expr_lf.terms])
