@@ -47,22 +47,17 @@ import JuMP: @constraint,
     owner_model,
     linear_terms,
     index,
-    isexpr,
-    _is_info_keyword,
-    _keywordify,
-    _constructor_expr,
     Containers,
     variable_type,
     ScalarVariable,
     add_variable,
     constant,
     termination_status,
-    _throw_error_for_invalid_sense,
-    _parse_expr_toplevel
+    objective_value
 
 import Base.convert
 
-#using MacroTools
+using MacroTools
 
 export @denominator,
     @numerator,
@@ -123,8 +118,24 @@ Base.broadcastable(v::LinearFractionalVariableRef) = Ref(v)
 JuMP.isequal_canonical(v::LinearFractionalVariableRef, w::LinearFractionalVariableRef) = v == w
 JuMP.variable_type(::LinearFractionalModel) = LinearFractionalVariableRef
 function JuMP.add_variable(m::LinearFractionalModel, v::JuMP.AbstractVariable, name::String="")
-    vref = JuMP.add_variable(m.model, v, name)
-    LinearFractionalVariableRef(m, vref)
+
+    inner_vref = JuMP.add_variable(m.model, v, name)
+    vref = LinearFractionalVariableRef(m, inner_vref)
+
+    if has_lower_bound(inner_vref)
+        lb = lower_bound(inner_vref)
+        delete_lower_bound(inner_vref)
+        set_lower_bound(vref, lb)
+    end
+
+    if has_upper_bound(inner_vref)
+        ub = upper_bound(inner_vref)
+        delete_upper_bound(inner_vref)
+        set_upper_bound(vref, ub)
+    end
+
+    return vref
+
 end
 function JuMP.delete(model::LinearFractionalModel, vref::LinearFractionalVariableRef)
     JuMP.delete(model.model, vref.vref)
@@ -166,6 +177,14 @@ function update_variable_info(vref::VariableRef, info::JuMP.VariableInfo)
    vref.model.variables[vref.idx] = JuMP.ScalarVariable(info)
 end
 
+function set_lower_bound(vref::LinearFractionalVariableRef, lower::Number)
+    @constraint(vref.model, vref >= lower)
+end
+
+function set_upper_bound(vref::LinearFractionalVariableRef, upper::Number)
+    @constraint(vref.model, vref <= upper)
+end
+
 
 # TODO: remove after https://github.com/JuliaOpt/JuMP.jl/pull/1935 released
 function set_standard_form_rhs(
@@ -190,7 +209,7 @@ function standard_form_rhs(
 end
 
 function transform_constraint(model::LinearFractionalModel, constraint_ref::ConstraintRef)
-    α = standard_form_rhs(constraint_ref)
+    α = convert(Float64, standard_form_rhs(constraint_ref))
     set_standard_form_rhs(constraint_ref, 0.0)
     JuMP.set_coefficient(constraint_ref, model.t, -α)
 end
@@ -228,47 +247,13 @@ function JuMP.set_objective(m::LinearFractionalModel, sense::MOI.OptimizationSen
     set_denominator(m, denominator)
 end
 
-# macro numerator(model, args...)
-#     _error(str...) = _macro_error(:numerator, (model, args...), str...)
-#
-#     # We don't overwrite `model` as it is used in `_error`
-#     esc_model = esc(model)
-#     if length(args) != 2
-#         # Either just an objective sense, or just an expression.
-#         _error("needs three arguments: model, objective sense (Max or Min) and expression.")
-#     end
-#     sense, x = args
-#     sense_expr = JuMP._moi_sense(_error, sense)
-#     newaff, parsecode = _parse_expr_toplevel(x, :q)
-#     code = quote
-#         q = Val{false}()
-#         $parsecode
-#         set_objective($esc_model, $sense_expr, $newaff)
-#     end
-#     return code
-#     #return JuMP._assert_valid_model(esc_internal_model, JuMP._macro_return(code, newaff))
-# end
+function JuMP.set_objective(m::LinearFractionalModel, sense::MOI.OptimizationSense,
+    numerator::GenericAffExpr{Float64, LinearFractionalVariableRef},
+    denominator::Float64)
+    set_numerator(m, sense, numerator)
+    @constraint(m.model, m.t == 1.0/denominator)
+end
 
-# macro denominator(model, expr)#args...)
-#     #_error(str...) = _macro_error(:objective, (model, args...), str...)
-#
-#     # We don't overwrite `model` as it is used in `_error`
-#     esc_model = esc(model)
-#     # if length(args) != 1
-#     #     # Either just an objective sense, or just an expression.
-#     #     _error("needs two arguments: model and expression.")
-#     # end
-#     # sense, x = args
-#     # sense_expr = _moi_sense(_error, sense)
-#     newaff, parsecode = JuMP._parse_expr_toplevel(expr, :q)
-#     code = quote
-#         q = Val{false}()
-#         $parsecode
-#         set_denominator($esc_model, $newaff)
-#     end
-#     return code
-#     #return JuMP._assert_valid_model(esc_model.model, _macro_return(code, newaff))
-# end
 
 
 """
@@ -288,10 +273,9 @@ the corresponding GenericAffExpr{Float64, VariableRef} in order to create the
 final expression in the denominator.
 """
 function set_denominator(model::LinearFractionalModel, expr_lf)
-    # Given a denominator
-    # want to add the constraint
     if !isnothing(model.denominator_constraint)
         delete(model, model.denominator_constraint)
+        model.denominator_constraint = nothing
     end
     β = expr_lf.constant
     expr = convert(GenericAffExpr{Float64,VariableRef}, expr_lf)
@@ -336,7 +320,7 @@ function JuMP.constraints_string(print_mode, model::LinearFractionalModel)
     JuMP.constraints_string(print_mode, model.model)
 end
 
-@forward LinearFractionalModel.model optimize!, termination_status
+@forward LinearFractionalModel.model optimize!, termination_status, objective_value
 
 function JuMP.value(v::LinearFractionalVariableRef)::Float64
     return JuMP.value(v.vref)/JuMP.value(v.model.t)
