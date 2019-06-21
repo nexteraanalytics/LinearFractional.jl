@@ -10,14 +10,7 @@
     @numerator(lfp,  Min, -2x1 + x2 + 2)
     @denominator(lfp,  x1 + 3x2 + 4)
     optimize!(lfp)
-
     @test termination_status(lfp.model) === MOI.OPTIMAL
-
-    value(lfp.t)
-    @test value(x1)/value(lfp.t) ≈ 7.0
-    @test value(x2)/value(lfp.t) ≈ 0.0
-
-    # Failing until we can back-transform the results.
     @test value(x1) ≈ 7.0
     @test value(x2) ≈ 0.0
 end
