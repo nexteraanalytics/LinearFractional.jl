@@ -4,15 +4,20 @@ module LinearFractional
 using MathOptInterface
 const MOI = MathOptInterface
 const MOIU = MathOptInterface.Utilities
-import JuMP
+using JuMP
 import JuMP: @constraint,
     @variable,
+    AbstractModel,
     AbstractVariableRef,
+    AbstractJuMPScalar,
     AffExpr,
+    Model,
     ConstraintRef,
     GenericAffExpr,
     GenericQuadExpr,
     VariableRef,
+    VariableInfo,
+    _VariableInfoExpr,
     add_to_expression!,
     objective_function,
     optimize!,
@@ -41,17 +46,30 @@ import JuMP: @constraint,
     set_name,
     owner_model,
     linear_terms,
-    index
+    index,
+    isexpr,
+    _is_info_keyword,
+    _keywordify,
+    _constructor_expr,
+    Containers,
+    variable_type,
+    ScalarVariable,
+    add_variable,
+    constant,
+    termination_status,
+    _throw_error_for_invalid_sense,
+    _parse_expr_toplevel
 
 import Base.convert
 
-using MacroTools
+#using MacroTools
 
 export @denominator,
     @numerator,
     LinearFractionalModel
 
-include("parseexpr.jl")
+#include("macros.jl")
+#include("parse_expr.jl")
 
 macro forward(ex, fs)
     T, field = ex.args[1], ex.args[2].value
@@ -63,7 +81,7 @@ macro forward(ex, fs)
     nothing)
 end
 
-mutable struct LinearFractionalModel <: JuMP.AbstractModel
+mutable struct LinearFractionalModel <: AbstractModel
     model::JuMP.Model #JuMP.Model(solver=solver)
     t::VariableRef
     denominator_constraint::Union{Nothing, ConstraintRef}
@@ -190,7 +208,7 @@ end
 @forward LinearFractionalModel.model JuMP.delete, JuMP.is_valid
 
 # Objective
-function transform_objective(m::LinearFractionalModel)
+function transform_objective_numerator(m::LinearFractionalModel)
     obj = objective_function(m.model, AffExpr)
     β = obj.constant
     obj.constant = 0.0
@@ -198,52 +216,59 @@ function transform_objective(m::LinearFractionalModel)
     JuMP.set_objective_function(m.model, obj)
 end
 
-function JuMP.set_objective(m::LinearFractionalModel, sense::MOI.OptimizationSense, f)
+function set_numerator(m::LinearFractionalModel, sense::MOI.OptimizationSense, f)
     JuMP.set_objective(m.model, sense, f)
-    transform_objective(m)
+    transform_objective_numerator(m)
 end
 
-macro numerator(model, args...)
-    _error(str...) = _macro_error(:numerator, (model, args...), str...)
-
-    # We don't overwrite `model` as it is used in `_error`
-    esc_model = esc(model)
-    if length(args) != 2
-        # Either just an objective sense, or just an expression.
-        _error("needs three arguments: model, objective sense (Max or Min) and expression.")
-    end
-    sense, x = args
-    sense_expr = JuMP._moi_sense(_error, sense)
-    newaff, parsecode = JuMP._parse_expr_toplevel(x, :q)
-    code = quote
-        q = Val{false}()
-        $parsecode
-        set_objective($esc_model, $sense_expr, $newaff)
-    end
-    return code
-    #return JuMP._assert_valid_model(esc_internal_model, JuMP._macro_return(code, newaff))
+function JuMP.set_objective(m::LinearFractionalModel, sense::MOI.OptimizationSense,
+    numerator::GenericAffExpr{Float64, LinearFractionalVariableRef},
+    denominator::GenericAffExpr{Float64, LinearFractionalVariableRef})
+    set_numerator(m, sense, numerator)
+    set_denominator(m, denominator)
 end
 
-macro denominator(model, expr)#args...)
-    #_error(str...) = _macro_error(:objective, (model, args...), str...)
+# macro numerator(model, args...)
+#     _error(str...) = _macro_error(:numerator, (model, args...), str...)
+#
+#     # We don't overwrite `model` as it is used in `_error`
+#     esc_model = esc(model)
+#     if length(args) != 2
+#         # Either just an objective sense, or just an expression.
+#         _error("needs three arguments: model, objective sense (Max or Min) and expression.")
+#     end
+#     sense, x = args
+#     sense_expr = JuMP._moi_sense(_error, sense)
+#     newaff, parsecode = _parse_expr_toplevel(x, :q)
+#     code = quote
+#         q = Val{false}()
+#         $parsecode
+#         set_objective($esc_model, $sense_expr, $newaff)
+#     end
+#     return code
+#     #return JuMP._assert_valid_model(esc_internal_model, JuMP._macro_return(code, newaff))
+# end
 
-    # We don't overwrite `model` as it is used in `_error`
-    esc_model = esc(model)
-    # if length(args) != 1
-    #     # Either just an objective sense, or just an expression.
-    #     _error("needs two arguments: model and expression.")
-    # end
-    # sense, x = args
-    # sense_expr = _moi_sense(_error, sense)
-    newaff, parsecode = JuMP._parse_expr_toplevel(expr, :q)
-    code = quote
-        q = Val{false}()
-        $parsecode
-        set_denominator($esc_model, $newaff)
-    end
-    return code
-    #return JuMP._assert_valid_model(esc_model.model, _macro_return(code, newaff))
-end
+# macro denominator(model, expr)#args...)
+#     #_error(str...) = _macro_error(:objective, (model, args...), str...)
+#
+#     # We don't overwrite `model` as it is used in `_error`
+#     esc_model = esc(model)
+#     # if length(args) != 1
+#     #     # Either just an objective sense, or just an expression.
+#     #     _error("needs two arguments: model and expression.")
+#     # end
+#     # sense, x = args
+#     # sense_expr = _moi_sense(_error, sense)
+#     newaff, parsecode = JuMP._parse_expr_toplevel(expr, :q)
+#     code = quote
+#         q = Val{false}()
+#         $parsecode
+#         set_denominator($esc_model, $newaff)
+#     end
+#     return code
+#     #return JuMP._assert_valid_model(esc_model.model, _macro_return(code, newaff))
+# end
 
 
 """
@@ -269,8 +294,8 @@ function set_denominator(model::LinearFractionalModel, expr_lf)
         delete(model, model.denominator_constraint)
     end
     β = expr_lf.constant
-    expr_lf.constant = 0.0
     expr = convert(GenericAffExpr{Float64,VariableRef}, expr_lf)
+    expr.constant = 0.0
     add_to_expression!(expr, β, model.t)
     model.denominator_constraint = @constraint(model.model, expr == 1.0)
 end
@@ -288,11 +313,6 @@ function convert(::Type{GenericAffExpr{Float64,VariableRef}}, expr_lf::GenericAf
 end
 
 @forward LinearFractionalModel.model JuMP.objective_sense, JuMP.set_objective_sense
-# JuMP.objective_sense(model::LinearFractionalModel) = JuMP.objective_sense(model.model.objectivesense)
-# function JuMP.set_objective_sense(model::LinearFractionalModel, sense)
-#     set_objective_sense(model.model, sense)
-# end
-
 @forward LinearFractionalModel.model JuMP.objective_function_type, JuMP.objective_function
 @forward LinearFractionalVariableRef.vref name, set_name
 @forward LinearFractionalModel.model JuMP.variable_by_name
@@ -316,7 +336,7 @@ function JuMP.constraints_string(print_mode, model::LinearFractionalModel)
     JuMP.constraints_string(print_mode, model.model)
 end
 
-@forward LinearFractionalModel.model optimize!
+@forward LinearFractionalModel.model optimize!, termination_status
 
 function JuMP.value(v::LinearFractionalVariableRef)::Float64
     return JuMP.value(v.vref)/JuMP.value(v.model.t)
@@ -339,5 +359,6 @@ function MOI.ScalarAffineFunction(a::GenericAffExpr{Float64,LinearFractionalVari
                                           for t in linear_terms(a)]
     return MOI.ScalarAffineFunction(terms, a.constant)
 end
+
 
 end
