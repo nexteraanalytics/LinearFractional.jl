@@ -4,7 +4,7 @@ using LinearAlgebra
 using Clp
 using JuMP
 
-mytests = ["simpletest.jl", "arrayvars.jl", "transforms.jl"]
+mytests = ["simpletest.jl", "arrayvars.jl"]
 
 for mytest in mytests
     include(mytest)

@@ -1,6 +1,6 @@
 The LinearFractional Julia package is licensed under the MIT License:
 
-> Copyright (c) 2018: WindLogics, Inc.
+> Copyright (c) 2019: NextEra Analytics, Inc.
 >
 > Permission is hereby granted, free of charge, to any person obtaining
 > a copy of this software and associated documentation files (the

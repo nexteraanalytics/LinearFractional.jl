@@ -9,17 +9,16 @@ LinearFractional is an extension for [JuMP](https://github.com/JuliaOpt/JuMP.jl)
 
 ## Installation
 
-To install the latest development version, run the following command:
+To install the latest tagged version, run the following command from pkg-mode:
 
 ```julia
-using Pkg
-Pkg.add("LinearFractional")
+] add LinearFractional
 ```
 
 Then you can run the built-in unit tests with
 
 ```julia
-Pkg.test("LinearFractional")
+] test LinearFractional
 ```
 
 to verify that everything is functioning properly on your machine.
@@ -33,16 +32,18 @@ using LinearFractional
 using JuMP
 using Clp
 
-lfp = LinearFractionalModel(solver=ClpSolver())
-x1 = @variable(lfp, basename="x1", lowerbound=0)
-x2 = @variable(lfp, basename="x2", lowerbound=0, upperbound=6)
+lfp = LinearFractionalModel(with_optimizer(Clp.Optimizer))
+x1 = @variable(lfp, base_name="x1", lower_bound=0)
+x2 = @variable(lfp, base_name="x2", lower_bound=0, upper_bound=6)
 @constraint(lfp, -x1 + x2 <= 4)
 @constraint(lfp, 2x1 + x2 <= 14)
 @constraint(lfp, x2 <= 6)
-@numerator(lfp,  :Min, -2x1 + x2 + 2)
-@denominator(lfp,  x1 + 3x2 + 4)
-solve(lfp)
-getobjectivevalue(lfp)
-getvalue(x1)
-getvalue(x2)
+numer = @expression(lfp,  -2x1 + x2 + 2)
+denom = @expression(lfp,  x1 + 3x2 + 4)
+set_objective(lfp, JuMP.MOI.MIN_SENSE, numer, denom)
+optimize!(lfp)
+termination_status(lfp)
+objective_value(lfp)
+value(x1)
+value(x2)
 ```
