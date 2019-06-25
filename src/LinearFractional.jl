@@ -92,6 +92,19 @@ function LinearFractionalModel(optimizer_factory::JuMP.OptimizerFactory;
     return model
 end
 
+@forward LinearFractionalModel.model JuMP.constraint_by_name,
+    JuMP.delete,
+    JuMP.is_valid,
+    JuMP.num_variables,
+    JuMP.objective_function,
+    JuMP.objective_function_type,
+    JuMP.objective_sense,
+    JuMP.objective_value,
+    JuMP.optimize!,
+    JuMP.set_objective_sense,
+    JuMP.termination_status,
+    JuMP.variable_by_name
+
 Base.broadcastable(model::LinearFractionalModel) = Ref(model)
 
 JuMP.object_dictionary(model::LinearFractionalModel) = model.model.obj_dict
@@ -104,6 +117,31 @@ struct LinearFractionalVariableRef <: JuMP.AbstractVariableRef
     model::LinearFractionalModel
     vref::VariableRef
 end
+
+@forward LinearFractionalVariableRef.vref name, 
+    set_name,
+    lower_bound,
+    has_lower_bound,
+    set_lower_bound,
+    delete_lower_bound,
+    has_upper_bound,
+    set_upper_bound,
+    delete_upper_bound,
+    upper_bound,
+    is_fixed,
+    fixed_value,
+    fix,
+    unfix,
+    start_value,
+    set_start_value,
+    set_binary,
+    unset_binary,
+    is_binary,
+    is_integer,
+    set_integer,
+    unset_integer,
+    owner_model,
+    _assert_isfinite
 
 Base.copy(v::LinearFractionalVariableRef) = v
 Base.copy(v::LinearFractionalVariableRef, new_model::LinearFractionalModel) = LinearFractionalVariableRef(new_model, v.idx)
@@ -140,31 +178,8 @@ function JuMP.is_valid(model::LinearFractionalModel, vref::LinearFractionalVaria
             is_valid(model.model, vref.vref))
 end
 
-@forward LinearFractionalModel.model JuMP.num_variables
 
 # Internal functions
-@forward LinearFractionalVariableRef.vref lower_bound,
-   has_lower_bound,
-   set_lower_bound,
-   delete_lower_bound,
-   has_upper_bound,
-   set_upper_bound,
-   delete_upper_bound,
-   upper_bound,
-   is_fixed,
-   fixed_value,
-   fix,
-   unfix,
-   start_value,
-   set_start_value,
-   set_binary,
-   unset_binary,
-   is_binary,
-   is_integer,
-   set_integer,
-   unset_integer,
-   owner_model,
-   _assert_isfinite
 
 # Defined just to be forwarded above
 variable_info(vref::VariableRef) = vref.model.variables[vref.idx].info
@@ -218,8 +233,6 @@ function JuMP.add_constraint(model::LinearFractionalModel, c::JuMP.AbstractConst
     transform_constraint(model, cref)
     return cref
 end
-
-@forward LinearFractionalModel.model JuMP.delete, JuMP.is_valid
 
 # Objective
 function transform_objective_numerator(m::LinearFractionalModel)
@@ -289,11 +302,7 @@ function convert(::Type{GenericAffExpr{Float64,VariableRef}}, expr_lf::GenericAf
     GenericAffExpr{Float64,VariableRef}(expr_lf.constant, [Pair(term.vref, coef) for (term, coef) in expr_lf.terms])
 end
 
-@forward LinearFractionalModel.model JuMP.objective_sense, JuMP.set_objective_sense
-@forward LinearFractionalModel.model JuMP.objective_function_type, JuMP.objective_function
-@forward LinearFractionalVariableRef.vref name, set_name
-@forward LinearFractionalModel.model JuMP.variable_by_name
-@forward LinearFractionalModel.model JuMP.constraint_by_name
+
 
 
 # Show
@@ -312,8 +321,6 @@ end
 function JuMP.constraints_string(print_mode, model::LinearFractionalModel)
     JuMP.constraints_string(print_mode, model.model)
 end
-
-@forward LinearFractionalModel.model optimize!, termination_status, objective_value
 
 function JuMP.value(v::LinearFractionalVariableRef)::Float64
     return JuMP.value(v.vref)/JuMP.value(v.model.t)
