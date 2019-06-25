@@ -118,7 +118,7 @@ struct LinearFractionalVariableRef <: JuMP.AbstractVariableRef
     vref::VariableRef
 end
 
-@forward LinearFractionalVariableRef.vref name, 
+@forward LinearFractionalVariableRef.vref name,
     set_name,
     lower_bound,
     has_lower_bound,
@@ -258,6 +258,9 @@ end
 function JuMP.set_objective(m::LinearFractionalModel, sense::MOI.OptimizationSense,
     numerator::GenericAffExpr{Float64, LinearFractionalVariableRef},
     denominator::Float64)
+
+    denominator <= 0.0 && error("A LinearFractionalModel with a constant denominator must have a positive denominator.")
+
     set_numerator(m, sense, numerator)
     @constraint(m.model, m.t == 1.0/denominator)
 end
