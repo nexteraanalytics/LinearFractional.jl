@@ -134,8 +134,6 @@ end
     unfix,
     start_value,
     set_start_value,
-    set_binary,
-    unset_binary,
     is_binary,
     is_integer,
     set_integer,
@@ -167,6 +165,11 @@ function JuMP.add_variable(m::LinearFractionalModel, v::JuMP.AbstractVariable, n
         set_upper_bound(vref, ub)
     end
 
+    if is_binary(inner_vref)
+        unset_binary(inner_vref)
+        set_binary(vref)
+    end
+
     return vref
 
 end
@@ -193,6 +196,61 @@ end
 
 function set_upper_bound(vref::LinearFractionalVariableRef, upper::Number)
     @constraint(vref.model, vref <= upper)
+end
+
+"""
+If a variable is binary,
+then y ∈ {0, t}
+e.g., y = zt for a binary variable z ∈ {0, 1}
+let t̲ be a small number represending m
+
+y ∈ [0, t]
+y >= 0   (1)
+y <= t   (2)
+
+if z = 0, y <= 0 --> y == 0
+if z = 1, y is free
+y <= zt̅  (3)
+
+if z = 0, y free
+if z = 1, y >= t --> y == t
+y >= t - (1-z)M   (4)
+
+
+Ensure that we don't set the binary true value on the inner variable.
+But then we need to track the binaryness at the LFVariableRef layer.  We
+can do this in a couple of ways.
+
+Options:
+- within each LinearFractionalVariableRef, store a latent binary and add constraints
+
+- have an Dict of ScalarVariables at the model level that hold this information
+  just like in the JuMPExtension example
+
+- within each LinearFractionalVariableRef, store just a binary flag
+  - intercept optimize call, add latent binaries, and set binary constraints for
+    all binaries at one time.  This should be more efficient, but code a bit messier.
+
+For now, going with the first option as the cleanest code, and will see if
+performance is adequate.
+"""
+function JuMP.set_binary(lvref::LinearFractionalVariableRef)
+    M = 1e8
+
+    trans_model = lvref.model.model
+    t = lvref.model.t
+    y = lvref.vref
+    z = @variable(trans_model, binary=true)
+
+    # 0 ≦ y ≦ t
+    set_lower_bound(y, 0.0)
+    @constraint(trans_model, y <= t)
+
+    # y <= zt̅  (3)
+    @constraint(trans_model, y <= z * M)
+
+    # y >= t - (1-z)M   (4)
+    @constraint(trans_model, y >= t - (1 - z) * M)
 end
 
 
