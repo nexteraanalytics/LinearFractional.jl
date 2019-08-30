@@ -1,10 +1,10 @@
 using Test
 using LinearFractional
 using LinearAlgebra
-using Clp
+using Clp, Cbc
 using JuMP
 
-mytests = ["simpletest.jl", "arrayvars.jl"]
+mytests = ["simpletest.jl", "arrayvars.jl", "mip.jl"]
 
 for mytest in mytests
     include(mytest)
