@@ -211,10 +211,9 @@ function set_upper_bound(vref::LinearFractionalVariableRef, upper::Number)
 end
 
 """
-If a variable is binary,
-then y ∈ {0, t}
+If the original variable is binary,
+then y ∈ {0, t}.  We can solve this with a big-M formuation:
 e.g., y = zt for a binary variable z ∈ {0, 1}
-let t̲ be a small number represending m
 
 y ∈ [0, t]
 y >= 0   (1)
@@ -222,29 +221,11 @@ y <= t   (2)
 
 if z = 0, y <= 0 --> y == 0
 if z = 1, y is free
-y <= zt̅  (3)
+y <= zM  (3)
 
 if z = 0, y free
 if z = 1, y >= t --> y == t
 y >= t - (1-z)M   (4)
-
-
-Ensure that we don't set the binary true value on the inner variable.
-But then we need to track the binaryness at the LFVariableRef layer.  We
-can do this in a couple of ways.
-
-Options:
-- within each LinearFractionalVariableRef, store a latent binary and add constraints
-
-- have an Dict of ScalarVariables at the model level that hold this information
-  just like in the JuMPExtension example
-
-- within each LinearFractionalVariableRef, store just a binary flag
-  - intercept optimize call, add latent binaries, and set binary constraints for
-    all binaries at one time.  This should be more efficient, but code a bit messier.
-
-For now, going with the first option as the cleanest code, and will see if
-performance is adequate.
 """
 function JuMP.set_binary(lvref::LinearFractionalVariableRef)
     M = lvref.model.options.binary_M
@@ -258,7 +239,7 @@ function JuMP.set_binary(lvref::LinearFractionalVariableRef)
     set_lower_bound(y, 0.0)
     @constraint(trans_model, y <= t)
 
-    # y <= zt̅  (3)
+    # y <= zM  (3)
     @constraint(trans_model, y <= z * M)
 
     # y >= t - (1-z)M   (4)
