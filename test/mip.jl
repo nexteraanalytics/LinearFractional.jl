@@ -15,4 +15,12 @@
     @test termination_status(lfp) === MOI.OPTIMAL
     @test value(x1) ≈ 1.0
     @test value(x2) ≈ 0.0
+
+    @testset "Set the binary big-M" begin
+        lfp = LinearFractionalModel(with_optimizer(Cbc.Optimizer); binary_M = 100.0)
+        @test lfp.options.binary_M == 100.0
+
+        lfp = LinearFractionalModel(with_optimizer(Cbc.Optimizer); binary_M = 10.0)
+        @test lfp.options.binary_M == 10.0
+    end
 end

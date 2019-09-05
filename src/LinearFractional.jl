@@ -71,16 +71,28 @@ macro forward(ex, fs)
     nothing)
 end
 
+Base.@kwdef struct LinearFractionalOptions
+    binary_M::Float64 = 1e3
+end
+
 mutable struct LinearFractionalModel <: AbstractModel
     model::JuMP.Model #JuMP.Model(solver=solver)
     t::VariableRef
     denominator_constraint::Union{Nothing, ConstraintRef}
+    options::LinearFractionalOptions
 
     function LinearFractionalModel(; kwargs...)
-        model = JuMP.Model(kwargs...)
-        model.ext[:is_linear_fractional] = true
-        t = @variable(model, lower_bound = 0.0, base_name = "lf_aux")
-        new(model, t, nothing)
+        all_kwargs = collect(kwargs)
+        jump_kwargs = filter(pair -> pair.first ∉ fieldnames(LinearFractionalOptions),
+            all_kwargs)
+        lf_option_kwargs = filter(pair -> pair.first ∈ fieldnames(LinearFractionalOptions),
+            all_kwargs)
+
+        model = JuMP.Model(jump_kwargs...)
+        t = @variable(model, lower_bound = 10*eps(), base_name = "lf_aux")
+
+        options = LinearFractionalOptions(; lf_option_kwargs...)
+        new(model, t, nothing, options)
     end
 end
 
@@ -235,7 +247,7 @@ For now, going with the first option as the cleanest code, and will see if
 performance is adequate.
 """
 function JuMP.set_binary(lvref::LinearFractionalVariableRef)
-    M = 1e8
+    M = lvref.model.options.binary_M
 
     trans_model = lvref.model.model
     t = lvref.model.t
