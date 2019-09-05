@@ -71,16 +71,28 @@ macro forward(ex, fs)
     nothing)
 end
 
+Base.@kwdef struct LinearFractionalOptions
+    binary_M::Float64 = 1e3
+end
+
 mutable struct LinearFractionalModel <: AbstractModel
     model::JuMP.Model #JuMP.Model(solver=solver)
     t::VariableRef
     denominator_constraint::Union{Nothing, ConstraintRef}
+    options::LinearFractionalOptions
 
     function LinearFractionalModel(; kwargs...)
-        model = JuMP.Model(kwargs...)
-        model.ext[:is_linear_fractional] = true
-        t = @variable(model, lower_bound = 0.0, base_name = "lf_aux")
-        new(model, t, nothing)
+        all_kwargs = collect(kwargs)
+        jump_kwargs = filter(pair -> pair.first ∉ fieldnames(LinearFractionalOptions),
+            all_kwargs)
+        lf_option_kwargs = filter(pair -> pair.first ∈ fieldnames(LinearFractionalOptions),
+            all_kwargs)
+
+        model = JuMP.Model(jump_kwargs...)
+        t = @variable(model, lower_bound = 10*eps(), base_name = "lf_aux")
+
+        options = LinearFractionalOptions(; lf_option_kwargs...)
+        new(model, t, nothing, options)
     end
 end
 
@@ -134,8 +146,6 @@ end
     unfix,
     start_value,
     set_start_value,
-    set_binary,
-    unset_binary,
     is_binary,
     is_integer,
     set_integer,
@@ -167,6 +177,11 @@ function JuMP.add_variable(m::LinearFractionalModel, v::JuMP.AbstractVariable, n
         set_upper_bound(vref, ub)
     end
 
+    if is_binary(inner_vref)
+        unset_binary(inner_vref)
+        set_binary(vref)
+    end
+
     return vref
 
 end
@@ -193,6 +208,42 @@ end
 
 function set_upper_bound(vref::LinearFractionalVariableRef, upper::Number)
     @constraint(vref.model, vref <= upper)
+end
+
+"""
+If the original variable is binary,
+then y ∈ {0, t}.  We can solve this with a big-M formuation:
+e.g., y = zt for a binary variable z ∈ {0, 1}
+
+y ∈ [0, t]
+y >= 0   (1)
+y <= t   (2)
+
+if z = 0, y <= 0 --> y == 0
+if z = 1, y is free
+y <= zM  (3)
+
+if z = 0, y free
+if z = 1, y >= t --> y == t
+y >= t - (1-z)M   (4)
+"""
+function JuMP.set_binary(lvref::LinearFractionalVariableRef)
+    M = lvref.model.options.binary_M
+
+    trans_model = lvref.model.model
+    t = lvref.model.t
+    y = lvref.vref
+    z = @variable(trans_model, binary=true)
+
+    # 0 ≦ y ≦ t
+    set_lower_bound(y, 0.0)
+    @constraint(trans_model, y <= t)
+
+    # y <= zM  (3)
+    @constraint(trans_model, y <= z * M)
+
+    # y >= t - (1-z)M   (4)
+    @constraint(trans_model, y >= t - (1 - z) * M)
 end
 
 
