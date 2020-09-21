@@ -96,7 +96,7 @@ mutable struct LinearFractionalModel <: AbstractModel
     end
 end
 
-function LinearFractionalModel(optimizer::Type{<:MOI.AbstractOptimizer};
+function LinearFractionalModel(optimizer::Union{Type{<:MOI.AbstractOptimizer}, MOI.OptimizerWithAttributes};
                bridge_constraints::Bool=true, kwargs...)
     model = LinearFractionalModel(; kwargs...)
     JuMP.set_optimizer(model.model, optimizer,
