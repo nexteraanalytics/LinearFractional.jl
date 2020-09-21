@@ -96,10 +96,10 @@ mutable struct LinearFractionalModel <: AbstractModel
     end
 end
 
-function LinearFractionalModel(optimizer_factory::JuMP.OptimizerFactory;
+function LinearFractionalModel(optimizer::Type{<:MOI.AbstractOptimizer};
                bridge_constraints::Bool=true, kwargs...)
     model = LinearFractionalModel(; kwargs...)
-    JuMP.set_optimizer(model.model, optimizer_factory,
+    JuMP.set_optimizer(model.model, optimizer,
                   bridge_constraints=bridge_constraints)
     return model
 end
@@ -247,39 +247,15 @@ function JuMP.set_binary(lvref::LinearFractionalVariableRef)
 end
 
 
-# TODO: remove after https://github.com/JuliaOpt/JuMP.jl/pull/1935 released
-function set_standard_form_rhs(
-    constraint::ConstraintRef{JuMP.Model, JuMP._MOICON{F, S}}, value) where {
-        T,
-        S <: Union{MOI.LessThan{T}, MOI.GreaterThan{T}, MOI.EqualTo{T}},
-        F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}
-    MOI.set(JuMP.owner_model(constraint), MOI.ConstraintSet(), constraint,
-            S(convert(T, value)))
-    return
-end
-
-
-# TODO: remove after https://github.com/JuliaOpt/JuMP.jl/pull/1935 released
-function standard_form_rhs(
-    constraint::ConstraintRef{JuMP.Model, JuMP._MOICON{F, S}}) where {
-        T,
-        S <: Union{MOI.LessThan{T}, MOI.GreaterThan{T}, MOI.EqualTo{T}},
-        F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}
-    con = JuMP.constraint_object(constraint)
-    return MOIU.getconstant(con.set)
-end
-
 function transform_constraint(model::LinearFractionalModel, constraint_ref::ConstraintRef)
-    α = convert(Float64, standard_form_rhs(constraint_ref))
-    set_standard_form_rhs(constraint_ref, 0.0)
-    JuMP.set_coefficient(constraint_ref, model.t, -α)
+    α = convert(Float64, normalized_rhs(constraint_ref))
+    set_normalized_rhs(constraint_ref, 0.0)
+    JuMP.set_normalized_coefficient(constraint_ref, model.t, -α)
 end
 
 JuMP.constraint_type(::LinearFractionalModel) = ConstraintRef
 function JuMP.add_constraint(model::LinearFractionalModel, c::JuMP.AbstractConstraint,
                              name::String="")
-
-
     cref = JuMP.add_constraint(model.model, c, name)
     transform_constraint(model, cref)
     return cref
