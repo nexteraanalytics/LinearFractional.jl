@@ -1,5 +1,5 @@
 @testset "Binary Variables" begin
-    lfp = LinearFractionalModel(with_optimizer(Cbc.Optimizer))
+    lfp = LinearFractionalModel(Cbc.Optimizer)
 
     x1 = @variable(lfp, lower_bound=0, base_name="x1", binary=true)
     x2 = @variable(lfp, lower_bound=0, binary=true, base_name="x2")
@@ -17,10 +17,10 @@
     @test value(x2) ≈ 0.0
 
     @testset "Set the binary big-M" begin
-        lfp = LinearFractionalModel(with_optimizer(Cbc.Optimizer); binary_M = 100.0)
+        lfp = LinearFractionalModel(Cbc.Optimizer; binary_M = 100.0)
         @test lfp.options.binary_M == 100.0
 
-        lfp = LinearFractionalModel(with_optimizer(Cbc.Optimizer); binary_M = 10.0)
+        lfp = LinearFractionalModel(Cbc.Optimizer; binary_M = 10.0)
         @test lfp.options.binary_M == 10.0
     end
 end

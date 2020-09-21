@@ -1,5 +1,5 @@
 @testset "Array variables" begin
-    lfp = LinearFractionalModel(with_optimizer(Clp.Optimizer))
+    lfp = LinearFractionalModel(Clp.Optimizer)
     a = [-2, 0]
     x = @variable(lfp, [i=1:2], base_name="x", lower_bound=0)
     @constraint(lfp, x[2] <= 6)
@@ -15,11 +15,11 @@ end
 
 
 @testset "Array constraints" begin
-    lfp = LinearFractionalModel(with_optimizer(Clp.Optimizer))
+    lfp = LinearFractionalModel(Clp.Optimizer)
     x = @variable(lfp, [i=1:2], base_name="x")
     a = [2.0, 1.0]
     upbs = [4.0, 20.0]
-    lbs = [-4.0, -20.0]
+    lbs = [-4.0, -0.2]
     @constraint(lfp, [i=1:2], x[i] <= upbs[i])
     @constraint(lfp, [i=1:2], x[i] >= lbs[i])
     numer = @expression(lfp,  sum(a[i] * x[i] for i in 1:2) + 2)
@@ -32,7 +32,7 @@ end
 
 
 @testset "Match LP" begin
-    lfp = LinearFractionalModel(with_optimizer(Clp.Optimizer))
+    lfp = LinearFractionalModel(Clp.Optimizer)
     a = [4, 2]
     upbs = [4.0, 20.0]
     lbs = [-1.0, -10.0]
@@ -43,7 +43,7 @@ end
     denom = @expression(lfp,  sum(x))
     set_objective(lfp, MOI.MIN_SENSE, numer, denom)
     optimize!(lfp)
-    m = Model(with_optimizer(Clp.Optimizer))
+    m = Model(Clp.Optimizer)
     xm = @variable(m, [i=1:2], base_name="x")
     t = @variable(m, lower_bound=0.0)
     a = [4, 2]
@@ -63,7 +63,7 @@ end
 
 
 @testset "Constant denominator" begin
-    lfp = LinearFractionalModel(with_optimizer(Clp.Optimizer))
+    lfp = LinearFractionalModel(Clp.Optimizer)
     a = [4, 2]
     upbs = [4, 20]
     lbs = [-1, -10]
@@ -77,7 +77,7 @@ end
     set_objective(lfp, MOI.MIN_SENSE, numer, denom)
     optimize!(lfp)
 
-    m = Model(with_optimizer(Clp.Optimizer))
+    m = Model(Clp.Optimizer)
     a = [4, 2]
     upbs = [4, 20]
     lbs = [-1,-10]
