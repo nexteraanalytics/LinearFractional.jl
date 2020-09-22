@@ -352,8 +352,8 @@ function JuMP.constraints_string(print_mode, model::LinearFractionalModel)
     JuMP.constraints_string(print_mode, model.model)
 end
 
-function JuMP.value(v::LinearFractionalVariableRef)::Float64
-    return JuMP.value(v.vref)/JuMP.value(v.model.t)
+function JuMP.value(v::LinearFractionalVariableRef; result=1)::Float64
+    return JuMP.value(v.vref, result=result)/JuMP.value(v.model.t, result=result)
 end
 
 
