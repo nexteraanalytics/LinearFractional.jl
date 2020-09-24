@@ -16,6 +16,10 @@
     @test value(x1) ≈ 7.0
     @test value(x2) ≈ 0.0
     @test result_count(lfp) == 1
+
+    # Expression
+    total = x1 + x2
+    @test value(total) == value(x1) + value(x2)
 end
 
 @testset "Optimizer With Attributes" begin
