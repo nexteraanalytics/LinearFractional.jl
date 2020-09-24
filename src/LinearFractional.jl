@@ -53,7 +53,8 @@ import JuMP: @constraint,
     add_variable,
     constant,
     termination_status,
-    objective_value
+    objective_value,
+    result_count
 
 import Base.convert
 
@@ -115,7 +116,8 @@ end
     JuMP.optimize!,
     JuMP.set_objective_sense,
     JuMP.termination_status,
-    JuMP.variable_by_name
+    JuMP.variable_by_name,
+    JuMP.result_count
 
 Base.broadcastable(model::LinearFractionalModel) = Ref(model)
 
