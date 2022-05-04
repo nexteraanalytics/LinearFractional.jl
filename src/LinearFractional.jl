@@ -48,7 +48,6 @@ import JuMP: @constraint,
     linear_terms,
     index,
     Containers,
-    variable_type,
     ScalarVariable,
     add_variable,
     constant,
@@ -98,10 +97,10 @@ mutable struct LinearFractionalModel <: AbstractModel
 end
 
 function LinearFractionalModel(optimizer;
-               bridge_constraints::Bool=true, kwargs...)
+               add_bridges::Bool=true, kwargs...)
     model = LinearFractionalModel(; kwargs...)
     JuMP.set_optimizer(model.model, optimizer,
-                  bridge_constraints=bridge_constraints)
+                  add_bridges=add_bridges)
     return model
 end
 
@@ -161,7 +160,6 @@ Base.copy(v::LinearFractionalVariableRef, new_model::LinearFractionalModel) = Li
 Base.:(==)(v::LinearFractionalVariableRef, w::LinearFractionalVariableRef) = v.model === w.model && (v.vref == w.vref)
 Base.broadcastable(v::LinearFractionalVariableRef) = Ref(v)
 JuMP.isequal_canonical(v::LinearFractionalVariableRef, w::LinearFractionalVariableRef) = v == w
-JuMP.variable_type(::LinearFractionalModel) = LinearFractionalVariableRef
 function JuMP.add_variable(m::LinearFractionalModel, v::JuMP.AbstractVariable, name::String="")
 
     inner_vref = JuMP.add_variable(m.model, v, name)
@@ -255,7 +253,6 @@ function transform_constraint(model::LinearFractionalModel, constraint_ref::Cons
     JuMP.set_normalized_coefficient(constraint_ref, model.t, -α)
 end
 
-JuMP.constraint_type(::LinearFractionalModel) = ConstraintRef
 function JuMP.add_constraint(model::LinearFractionalModel, c::JuMP.AbstractConstraint,
                              name::String="")
     cref = JuMP.add_constraint(model.model, c, name)
