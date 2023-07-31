@@ -38,3 +38,10 @@ end
     @test value(x1) ≈ 7.0
     @test value(x2) ≈ 0.0
 end
+
+@testset "Optimizer With Fixed Constraints" begin
+    lfp = LinearFractionalModel(MOI.OptimizerWithAttributes(Clp.Optimizer, "LogLevel" => 4))
+    @constraint(lfp, fixed_c, 1 + 1 == 2)
+
+    @test lfp[:fixed_c] === fixed_c
+end
