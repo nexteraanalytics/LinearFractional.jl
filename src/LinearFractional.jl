@@ -160,6 +160,7 @@ Base.copy(v::LinearFractionalVariableRef, new_model::LinearFractionalModel) = Li
 Base.:(==)(v::LinearFractionalVariableRef, w::LinearFractionalVariableRef) = v.model === w.model && (v.vref == w.vref)
 Base.broadcastable(v::LinearFractionalVariableRef) = Ref(v)
 JuMP.isequal_canonical(v::LinearFractionalVariableRef, w::LinearFractionalVariableRef) = v == w
+JuMP.variable_ref_type(::Union{LinearFractionalModel, Type{LinearFractionalModel}}) = LinearFractionalVariableRef
 function JuMP.add_variable(m::LinearFractionalModel, v::JuMP.AbstractVariable, name::String="")
 
     inner_vref = JuMP.add_variable(m.model, v, name)
