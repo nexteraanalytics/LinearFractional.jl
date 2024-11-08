@@ -16,8 +16,9 @@ julia = "^1.6"
 [extras]
 Cbc = "9961bab8-2fa3-5c5a-9d89-47fab24efd76"
 Clp = "e2554f3b-3117-50c0-817c-e040a3ddf72d"
+ECOS = "e2685f51-7e38-5353-a97d-a921fd2c8199"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Clp", "Cbc", "Test", "LinearAlgebra"]
+test = ["Clp", "Cbc", "ECOS", "Test", "LinearAlgebra"]

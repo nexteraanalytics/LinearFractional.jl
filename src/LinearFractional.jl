@@ -152,7 +152,8 @@ end
     set_integer,
     unset_integer,
     owner_model,
-    _assert_isfinite
+    _assert_isfinite,
+    index
 
 Base.copy(v::LinearFractionalVariableRef) = v
 Base.copy(v::LinearFractionalVariableRef, new_model::LinearFractionalModel) = LinearFractionalVariableRef(new_model, v.idx)
@@ -254,12 +255,56 @@ function transform_constraint(model::LinearFractionalModel, constraint_ref::Cons
     JuMP.set_normalized_coefficient(constraint_ref, model.t, -α)
 end
 
+#function transform_constraint(
+#    model::LinearFractionalModel,
+#    constraint_ref::ConstraintRef{<:AbstractModel, MOI.ConstraintIndex{F,S}}
+#) where {F<:MOI.VectorAffineFunction{Float64}, S<:Union{MOI.SecondOrderCone,  MOI.RotatedSecondOrderCone}}
+    
+#    con = constraint_object(constraint_ref)
+#    func = jump_function(con)
+
+#    constants = [expr.constant for expr in func]
+    
+#    MOI.modify(backend(model.model), index(constraint_ref), 
+#              MOI.VectorConstantChange(zeros(length(constants))))
+              
+#    coefficients = [(i, α) for (i, α) in enumerate(constants) if !iszero(α)]
+#    if !isempty(coefficients)
+#        MOI.modify(backend(model.model), index(constraint_ref),
+#                  MOI.MultirowChange(index(model.t), coefficients))
+#    end
+
+#end
+
+function JuMP.add_constraint(
+    model::LinearFractionalModel, 
+    c::VectorConstraint{F, S}, 
+    name::String=""
+) where {F, S<:Union{MOI.SecondOrderCone, MOI.RotatedSecondOrderCone}}
+    
+    func = [convert(GenericAffExpr{Float64,VariableRef}, expr) for expr in jump_function(c)]
+    
+    for expr in func
+        if !iszero(expr.constant)
+            α = expr.constant
+            expr.constant = 0.0
+            add_to_expression!(expr, α, model.t)
+        end
+    end
+    
+    new_c = VectorConstraint(func, c.set)  
+    
+    return JuMP.add_constraint(model.model, new_c, name)
+end
+
 function JuMP.add_constraint(model::LinearFractionalModel, c::JuMP.AbstractConstraint,
                              name::String="")
     cref = JuMP.add_constraint(model.model, c, name)
     transform_constraint(model, cref)
     return cref
 end
+
+
 
 # Objective
 function transform_objective_numerator(m::LinearFractionalModel)
@@ -369,10 +414,18 @@ end
 function MOI.ScalarAffineFunction(a::GenericAffExpr{Float64,LinearFractionalVariableRef})
     _assert_isfinite(a)
     terms = MOI.ScalarAffineTerm{Float64}[MOI.ScalarAffineTerm(t[1],
-                                                               index(t[2].vref))
+                                                               index(t[2]))
                                           for t in linear_terms(a)]
     return MOI.ScalarAffineFunction(terms, a.constant)
 end
 
+function MOI.VectorAffineFunction(v::Vector{GenericAffExpr{Float64,LinearFractionalVariableRef}})
+    _assert_isfinite.(v)
+    terms = [MOI.VectorAffineTerm(i, MOI.ScalarAffineTerm(t[1], index(t[2])))
+             for (i, expr) in enumerate(v) 
+             for t in linear_terms(expr)]
+    constants = [expr.constant for expr in v]
+    return MOI.VectorAffineFunction(terms, constants)
+end
 
 end
