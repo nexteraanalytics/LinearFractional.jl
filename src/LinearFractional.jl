@@ -255,26 +255,6 @@ function transform_constraint(model::LinearFractionalModel, constraint_ref::Cons
     JuMP.set_normalized_coefficient(constraint_ref, model.t, -α)
 end
 
-#function transform_constraint(
-#    model::LinearFractionalModel,
-#    constraint_ref::ConstraintRef{<:AbstractModel, MOI.ConstraintIndex{F,S}}
-#) where {F<:MOI.VectorAffineFunction{Float64}, S<:Union{MOI.SecondOrderCone,  MOI.RotatedSecondOrderCone}}
-    
-#    con = constraint_object(constraint_ref)
-#    func = jump_function(con)
-
-#    constants = [expr.constant for expr in func]
-    
-#    MOI.modify(backend(model.model), index(constraint_ref), 
-#              MOI.VectorConstantChange(zeros(length(constants))))
-              
-#    coefficients = [(i, α) for (i, α) in enumerate(constants) if !iszero(α)]
-#    if !isempty(coefficients)
-#        MOI.modify(backend(model.model), index(constraint_ref),
-#                  MOI.MultirowChange(index(model.t), coefficients))
-#    end
-
-#end
 
 function JuMP.add_constraint(
     model::LinearFractionalModel, 
