@@ -190,11 +190,14 @@ end
 function JuMP.delete(model::LinearFractionalModel, vref::LinearFractionalVariableRef)
     JuMP.delete(model.model, vref.vref)
 end
+
 function JuMP.is_valid(model::LinearFractionalModel, vref::LinearFractionalVariableRef)
-    return (model === vref.model &&
-            is_valid(model.model, vref.vref))
+    return model === vref.model && is_valid(model.model, vref)
 end
 
+function JuMP.is_valid(model::JuMP.GenericModel, vref::LinearFractionalVariableRef)
+    return is_valid(model, vref.vref)
+end
 
 # Internal functions
 
